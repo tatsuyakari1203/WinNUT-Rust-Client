@@ -95,11 +95,11 @@ export default function App() {
               <Minus className="h-3 w-3 text-muted-foreground" />
             </button>
             <button
-              onClick={() => appWindow.close()}
-              className="p-1.5 hover:bg-destructive hover:text-white rounded transition-colors group"
-              title="Close"
+              onClick={() => appWindow.hide()}
+              className="p-1.5 hover:bg-muted rounded transition-colors group"
+              title="Hide to Tray"
             >
-              <X className="h-3 w-3 text-muted-foreground group-hover:text-white" />
+              <X className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
             </button>
           </div>
         </div>
