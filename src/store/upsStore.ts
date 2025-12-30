@@ -13,6 +13,13 @@ export const useUpsStore = create<UpsState>()(
       ratedPower: 1800, // Default for 3000VA
       fullLoadRuntime: 30, // Default to match WinNut optimism
       config: null,
+      shutdownConfig: {
+        enabled: false,
+        batteryThreshold: 30,
+        runtimeThreshold: 120,
+        stopType: 'Shutdown',
+        delaySeconds: 15,
+      },
 
       setUpsData: (data: UpsData) =>
         set((state) => {
@@ -58,6 +65,7 @@ export const useUpsStore = create<UpsState>()(
       setRatedPower: (watts) => set({ ratedPower: watts }),
       setFullLoadRuntime: (minutes) => set({ fullLoadRuntime: minutes }),
       setConfig: (config) => set({ config }),
+      setShutdownConfig: (shutdownConfig) => set({ shutdownConfig }),
     }),
     {
       name: 'ups-storage',
@@ -65,6 +73,7 @@ export const useUpsStore = create<UpsState>()(
         ratedPower: state.ratedPower,
         fullLoadRuntime: state.fullLoadRuntime,
         config: state.config,
+        shutdownConfig: state.shutdownConfig,
       }),
     }
   )

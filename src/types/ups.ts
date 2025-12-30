@@ -32,6 +32,16 @@ export interface NutConfig {
   password?: string;
 }
 
+export type ShutdownType = 'Shutdown' | 'Hibernate' | 'Sleep';
+
+export interface ShutdownConfig {
+  enabled: boolean;
+  batteryThreshold: number; // %
+  runtimeThreshold: number; // seconds
+  stopType: ShutdownType;
+  delaySeconds: number;
+}
+
 export interface UpsState {
   data: UpsData | null;
   history: { time: string; load: number; watts: number }[];
@@ -41,10 +51,12 @@ export interface UpsState {
   ratedPower: number | null; // Manually configured rated power
   fullLoadRuntime: number | null; // Minutes at 100% load
   config: NutConfig | null; // Persisted connection settings
+  shutdownConfig: ShutdownConfig; // Persistence for shutdown logic
   setUpsData: (data: UpsData) => void;
   setError: (error: string | null) => void;
   setConnected: (isConnected: boolean) => void;
   setRatedPower: (watts: number | null) => void;
   setFullLoadRuntime: (minutes: number | null) => void;
   setConfig: (config: NutConfig | null) => void;
+  setShutdownConfig: (config: ShutdownConfig) => void;
 }

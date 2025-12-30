@@ -20,7 +20,8 @@ pub fn run() {
             commands::connect_nut,
             commands::disconnect_nut,
             commands::get_ups_data,
-            commands::start_background_polling
+            commands::start_background_polling,
+            commands::trigger_system_stop
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

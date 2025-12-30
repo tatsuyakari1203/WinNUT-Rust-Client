@@ -84,3 +84,39 @@ pub async fn start_background_polling(
 
     Ok(())
 }
+#[tauri::command]
+pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+
+        let mut cmd = match action_type.as_str() {
+            "Shutdown" => {
+                let mut c = Command::new("shutdown");
+                c.args(&["/s", "/t", "0", "/f"]);
+                c
+            }
+            "Hibernate" => {
+                let mut c = Command::new("shutdown");
+                c.arg("/h");
+                c
+            }
+            "Sleep" => {
+                let mut c = Command::new("rundll32.exe");
+                c.args(&["powrprof.dll,SetSuspendState", "0,1,0"]);
+                c
+            }
+            _ => return Err("Invalid action type".to_string()),
+        };
+
+        match cmd.spawn() {
+            Ok(_) => Ok(()),
+            Err(e) => Err(format!("Failed to execute command: {}", e)),
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Offline actions only supported on Windows".to_string())
+    }
+}

@@ -1,25 +1,36 @@
-import { Zap, Activity, Cpu, Server, Plug, Waves, Minus, X } from "lucide-react";
-import "./App.css";
-import { useUpsData } from "./hooks/useUpsData";
-import { useUpsStore } from "./store/upsStore";
-import { StatusCard } from "./components/dashboard/StatusCard";
-import { BatteryGauge } from "./components/dashboard/BatteryGauge";
-import { LoadChart } from "./components/dashboard/LoadChart";
-import { SettingsModal } from "./components/settings/SettingsModal";
-import { PowerStatus } from "./components/dashboard/PowerStatus";
-import { useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useEffect } from 'react';
+import { useUpsStore } from './store/upsStore';
+import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import {
+  Zap,
+  Activity,
+  Server,
+  AlertTriangle,
+  X,
+  Minus,
+  Plug,
+  Waves,
+  Cpu
+} from 'lucide-react';
+import { StatusCard } from './components/dashboard/StatusCard';
+import { LoadChart } from './components/dashboard/LoadChart';
+import { BatteryGauge } from './components/dashboard/BatteryGauge';
+import { PowerStatus } from './components/dashboard/PowerStatus';
+import { SettingsModal } from './components/settings/SettingsModal';
+import { useShutdownMonitor } from './hooks/useShutdownMonitor';
+import { useUpsData } from './hooks/useUpsData';
 
-function App() {
+const appWindow = getCurrentWindow();
+
+export default function App() {
   useUpsData();
-  const { data, history, config, setConnected } = useUpsStore();
+  const { data, history, setConnected, config, shutdownConfig } = useUpsStore();
+  const { countdown } = useShutdownMonitor();
 
   const status = data?.status || "UNKNOWN";
   const isOnBattery = status.includes("OB");
   const isOnline = status.includes("OL");
-
-  const appWindow = getCurrentWindow();
 
   // Auto-connect and start polling on mount if config exists
   useEffect(() => {
@@ -40,12 +51,11 @@ function App() {
     };
 
     autoConnect();
-  }, [config]); // config dependency handles hydration too
+  }, [config]);
 
   const hostIsValid = (h: string) => h && h.trim().length > 0;
 
   const handleDrag = (e: React.MouseEvent) => {
-    // Only drag if left mouse button is pressed and NOT on interactive elements
     if (e.button === 0 && !(e.target as HTMLElement).closest('button, input, .no-drag')) {
       appWindow.startDragging();
     }
@@ -168,11 +178,55 @@ function App() {
                 <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Beeper</dt><dd className="font-medium capitalize">{data?.ups_beeper_status || "--"}</dd></div>
               </dl>
             </div>
+
+            <div>
+              <h4 className="text-[11px] font-bold text-muted-foreground mb-1.5 uppercase flex items-center justify-between">
+                Automation
+                {shutdownConfig.enabled ? (
+                  <span className="text-[9px] bg-primary/20 text-primary px-1.5 rounded-full">ACTIVE</span>
+                ) : (
+                  <span className="text-[9px] bg-muted text-muted-foreground px-1.5 rounded-full">OFF</span>
+                )}
+              </h4>
+              <dl className="space-y-1 text-[11px]">
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5">
+                  <dt className="text-muted-foreground">Action</dt>
+                  <dd className="font-medium text-primary">{shutdownConfig.stopType}</dd>
+                </div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5">
+                  <dt className="text-muted-foreground">Threshold</dt>
+                  <dd className="font-medium">{shutdownConfig.batteryThreshold}% / {shutdownConfig.runtimeThreshold}s</dd>
+                </div>
+                {countdown !== null && (
+                  <div className="flex justify-between gap-2 pt-1 border-b border-destructive/20">
+                    <dt className="text-destructive font-bold animate-pulse">COUNTDOWN</dt>
+                    <dd className="font-black text-destructive text-sm">{countdown}s</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
           </div>
         </section>
       </main>
+
+      {/* Shutdown Countdown Overlay */}
+      {countdown !== null && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-destructive text-destructive-foreground p-8 rounded-xl shadow-2xl flex flex-col items-center gap-6 max-w-sm border-4 border-white/20 animate-in zoom-in duration-300">
+            <div className="p-4 bg-white/10 rounded-full animate-bounce">
+              <AlertTriangle className="h-12 w-12 text-white" />
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-black uppercase tracking-tighter">System {shutdownConfig.stopType} Imminent</h2>
+              <p className="text-sm font-medium opacity-90">UPS battery is critical. Closing applications...</p>
+            </div>
+            <div className="text-7xl font-black font-mono tracking-tighter bg-white/10 px-8 py-4 rounded-lg">
+              {countdown}
+            </div>
+            <p className="text-[11px] font-bold uppercase tracking-widest opacity-60">Restore power to cancel</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-export default App;
