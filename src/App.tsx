@@ -1,4 +1,4 @@
-import { Zap, Activity, Cpu, Server, Plug, Waves } from "lucide-react";
+import { Zap, Activity, Cpu, Server, Plug, Waves, Minus, X } from "lucide-react";
 import "./App.css";
 import { useUpsData } from "./hooks/useUpsData";
 import { useUpsStore } from "./store/upsStore";
@@ -7,20 +7,58 @@ import { BatteryGauge } from "./components/dashboard/BatteryGauge";
 import { LoadChart } from "./components/dashboard/LoadChart";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { PowerStatus } from "./components/dashboard/PowerStatus";
+import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 function App() {
   useUpsData();
-  const { data, history } = useUpsStore();
+  const { data, history, config, setConnected } = useUpsStore();
 
   const status = data?.status || "UNKNOWN";
   const isOnBattery = status.includes("OB");
   const isOnline = status.includes("OL");
 
+  const appWindow = getCurrentWindow();
+
+  // Auto-connect and start polling on mount if config exists
+  useEffect(() => {
+    const autoConnect = async () => {
+      if (config && hostIsValid(config.host)) {
+        try {
+          console.log("Attempting auto-connect to:", config.host);
+          await invoke('connect_nut', { config });
+          await invoke('start_background_polling', {
+            upsName: 'ups',
+            intervalMs: 1000
+          });
+          setConnected(true);
+        } catch (err) {
+          console.error("Auto-connect failed:", err);
+        }
+      }
+    };
+
+    autoConnect();
+  }, [config]); // config dependency handles hydration too
+
+  const hostIsValid = (h: string) => h && h.trim().length > 0;
+
+  const handleDrag = (e: React.MouseEvent) => {
+    // Only drag if left mouse button is pressed and NOT on interactive elements
+    if (e.button === 0 && !(e.target as HTMLElement).closest('button, input, .no-drag')) {
+      appWindow.startDragging();
+    }
+  };
+
   return (
-    <div className="h-screen bg-white dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 select-none overflow-hidden flex flex-col">
+    <div className="h-screen bg-white dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 select-none overflow-hidden flex flex-col border border-zinc-100 dark:border-zinc-800 rounded-[2px]">
       {/* Header - Ultra Flush */}
-      <header className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
-        <div className="flex items-center gap-2">
+      <header
+        onMouseDown={handleDrag}
+        className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-100 dark:border-zinc-800 shrink-0 cursor-default select-none group/header"
+      >
+        <div className="flex items-center gap-2 pointer-events-none">
           <Zap className="h-3.5 w-3.5 text-yellow-500" />
           <h1 className="text-xs font-bold tracking-tight">Tauri UPS Monitor</h1>
           <div className="flex items-center gap-1.5 ml-2">
@@ -29,8 +67,28 @@ function App() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground mr-2 font-medium">{data?.ups_model || "--"}</span>
-          <SettingsModal />
+          <span className="text-[10px] text-muted-foreground mr-2 font-medium pointer-events-none">{data?.ups_model || "--"}</span>
+          <div className="no-drag">
+            <SettingsModal />
+          </div>
+
+          {/* Window Controls */}
+          <div className="flex items-center ml-2 border-l border-zinc-100 dark:border-zinc-800 pl-2 gap-1 no-drag">
+            <button
+              onClick={() => appWindow.minimize()}
+              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+              title="Minimize"
+            >
+              <Minus className="h-3 w-3 text-zinc-400" />
+            </button>
+            <button
+              onClick={() => appWindow.close()}
+              className="p-1.5 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 rounded transition-colors group"
+              title="Close"
+            >
+              <X className="h-3 w-3 text-zinc-400 group-hover:text-white" />
+            </button>
+          </div>
         </div>
       </header>
 

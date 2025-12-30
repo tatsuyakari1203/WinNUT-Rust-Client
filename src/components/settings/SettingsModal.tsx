@@ -8,38 +8,48 @@ import { useUpsStore } from '@/store/upsStore';
 import { Settings } from 'lucide-react';
 
 export function SettingsModal() {
+  const { setRatedPower, ratedPower, fullLoadRuntime, setFullLoadRuntime, config, setConfig, setConnected } = useUpsStore();
+
   const [open, setOpen] = useState(false);
-  const [host, setHost] = useState("192.168.1.105");
-  const [port, setPort] = useState(3493);
-  const [username, setUsername] = useState("monuser");
-  const [password, setPassword] = useState("secret");
+  const [host, setHost] = useState(config?.host || "127.0.0.1");
+  const [port, setPort] = useState(config?.port || 3493);
+  const [username, setUsername] = useState(config?.username || "");
+  const [password, setPassword] = useState(config?.password || "");
   const [ratedPowerInput, setRatedPowerInput] = useState("");
   const [fullLoadRuntimeInput, setFullLoadRuntimeInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { setRatedPower, ratedPower, fullLoadRuntime, setFullLoadRuntime } = useUpsStore();
-
-  // Load initial value from store when modal opens or value changes
+  // Load initial values from store when modal opens or store is hydrated
   useEffect(() => {
+    if (config) {
+      setHost(config.host);
+      setPort(config.port);
+      setUsername(config.username || "");
+      setPassword(config.password || "");
+    }
     if (ratedPower) {
       setRatedPowerInput(ratedPower.toString());
     }
     if (fullLoadRuntime) {
       setFullLoadRuntimeInput(fullLoadRuntime.toString());
     }
-  }, [ratedPower, fullLoadRuntime]);
+  }, [config, ratedPower, fullLoadRuntime]);
 
   const handleConnect = async () => {
     setLoading(true);
 
-    // Save settings to store
-    setRatedPower(ratedPowerInput ? Number(ratedPowerInput) : null);
-    setFullLoadRuntime(fullLoadRuntimeInput ? Number(fullLoadRuntimeInput) : null);
+    const newConfig = { host, port, username, password };
 
     try {
       await invoke('connect_nut', {
-        config: { host, port, username, password }
+        config: newConfig
       });
+
+      // Save all settings to store only after successful connection
+      setConfig(newConfig);
+      setRatedPower(ratedPowerInput ? Number(ratedPowerInput) : null);
+      setFullLoadRuntime(fullLoadRuntimeInput ? Number(fullLoadRuntimeInput) : null);
+      setConnected(true);
 
       // Start polling immediately after connection
       await invoke('start_background_polling', {

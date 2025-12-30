@@ -12,6 +12,7 @@ export const useUpsStore = create<UpsState>()(
       error: null,
       ratedPower: 1800, // Default for 3000VA
       fullLoadRuntime: 30, // Default to match WinNut optimism
+      config: null,
 
       setUpsData: (data: UpsData) =>
         set((state) => {
@@ -56,12 +57,14 @@ export const useUpsStore = create<UpsState>()(
       setConnected: (isConnected) => set({ isConnected }),
       setRatedPower: (watts) => set({ ratedPower: watts }),
       setFullLoadRuntime: (minutes) => set({ fullLoadRuntime: minutes }),
+      setConfig: (config) => set({ config }),
     }),
     {
       name: 'ups-storage',
       partialize: (state) => ({
         ratedPower: state.ratedPower,
-        fullLoadRuntime: state.fullLoadRuntime
+        fullLoadRuntime: state.fullLoadRuntime,
+        config: state.config,
       }),
     }
   )

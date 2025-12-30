@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "ups-client",
-        "width": 800,
-        "height": 600
+        "label": "main",
+        "title": "Tauri UPS Monitor",
+        "width": 1100,
+        "height": 650,
+        "resizable": false,
+        "decorations": false
       }
     ],
     "security": {

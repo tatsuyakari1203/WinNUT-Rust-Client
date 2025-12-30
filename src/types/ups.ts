@@ -25,6 +25,13 @@ export interface UpsData {
   driver_name?: string;
 }
 
+export interface NutConfig {
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+}
+
 export interface UpsState {
   data: UpsData | null;
   history: { time: string; load: number; watts: number }[];
@@ -33,9 +40,11 @@ export interface UpsState {
   lastUpdated: number | null;
   ratedPower: number | null; // Manually configured rated power
   fullLoadRuntime: number | null; // Minutes at 100% load
+  config: NutConfig | null; // Persisted connection settings
   setUpsData: (data: UpsData) => void;
   setError: (error: string | null) => void;
   setConnected: (isConnected: boolean) => void;
   setRatedPower: (watts: number | null) => void;
   setFullLoadRuntime: (minutes: number | null) => void;
+  setConfig: (config: NutConfig | null) => void;
 }
