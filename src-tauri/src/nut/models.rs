@@ -33,6 +33,13 @@ pub struct UpsData {
     pub output_frequency_nominal: Option<f64>,
     pub driver_name: Option<String>,
     pub driver_version: Option<String>,
+
+    // Phase 8: Standardization Extensions
+    pub ambient_temp: Option<f64>,
+    pub output_current: Option<f64>,
+    pub battery_current: Option<f64>,
+    pub ups_realpower: Option<f64>,
+    pub extended_vars: std::collections::HashMap<String, String>,
 }
 
 impl UpsData {

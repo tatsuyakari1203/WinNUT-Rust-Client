@@ -43,7 +43,18 @@ pub fn parse_list_vars(response: &str) -> UpsData {
                     "ups.beeper.status" => data.ups_beeper_status = Some(value.to_string()),
                     "driver.name" => data.driver_name = Some(value.to_string()),
                     "driver.version" => data.driver_version = Some(value.to_string()),
-                    _ => {}
+
+                    // Phase 8: Standardization
+                    "ambient.temperature" => data.ambient_temp = value.parse().ok(),
+                    "output.current" => data.output_current = value.parse().ok(),
+                    "battery.current" => data.battery_current = value.parse().ok(),
+                    "ups.realpower" => data.ups_realpower = value.parse().ok(),
+
+                    // Extended variables storage for anything else
+                    _ => {
+                        data.extended_vars
+                            .insert(key.to_string(), value.to_string());
+                    }
                 }
             }
         }

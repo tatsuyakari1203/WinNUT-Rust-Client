@@ -23,6 +23,13 @@ export interface UpsData {
   ups_beeper_status?: string;
   driver_version?: string;
   driver_name?: string;
+
+  // Standardization Extensions
+  ambient_temp?: number;
+  output_current?: number;
+  battery_current?: number;
+  ups_realpower?: number;
+  extended_vars?: Record<string, string>;
 }
 
 export interface NutConfig {
