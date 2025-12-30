@@ -42,9 +42,17 @@ export interface ShutdownConfig {
   delaySeconds: number;
 }
 
+export interface EventLog {
+  id: string;
+  time: string;
+  message: string;
+  type: 'info' | 'warning' | 'error';
+}
+
 export interface UpsState {
   data: UpsData | null;
   history: { time: string; load: number; watts: number }[];
+  events: EventLog[];
   error: string | null;
   isConnected: boolean;
   lastUpdated: number | null;
@@ -59,4 +67,5 @@ export interface UpsState {
   setFullLoadRuntime: (minutes: number | null) => void;
   setConfig: (config: NutConfig | null) => void;
   setShutdownConfig: (config: ShutdownConfig) => void;
+  clearEvents: () => void;
 }

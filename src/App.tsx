@@ -11,7 +11,8 @@ import {
   Minus,
   Plug,
   Waves,
-  Cpu
+  Cpu,
+  History as HistoryIcon
 } from 'lucide-react';
 import { StatusCard } from './components/dashboard/StatusCard';
 import { LoadChart } from './components/dashboard/LoadChart';
@@ -25,7 +26,7 @@ const appWindow = getCurrentWindow();
 
 export default function App() {
   useUpsData();
-  const { data, history, setConnected, config, shutdownConfig } = useUpsStore();
+  const { data, history, setConnected, config, shutdownConfig, events } = useUpsStore();
   const { countdown } = useShutdownMonitor();
 
   const status = data?.status || "UNKNOWN";
@@ -70,7 +71,7 @@ export default function App() {
       >
         <div className="flex items-center gap-2 pointer-events-none">
           <Zap className="h-3.5 w-3.5 text-yellow-500" />
-          <h1 className="text-xs font-bold tracking-tight">Tauri UPS Monitor</h1>
+          <h1 className="text-xs font-bold tracking-tight">WinNUT Rust Client</h1>
           <div className="flex items-center gap-1.5 ml-2">
             <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? 'bg-green-500' : isOnBattery ? 'bg-orange-500' : 'bg-red-500'}`}></span>
             <span className="text-[10px] font-bold text-muted-foreground uppercase">{status}</span>
@@ -106,14 +107,38 @@ export default function App() {
       <main className="flex-1 flex min-h-0 divide-x divide-border/50">
 
         {/* LEFT: Battery (20%) */}
-        <section className="w-[20%] p-4 flex flex-col gap-6 shrink-0 h-full overflow-y-auto">
+        <section className="w-[20%] p-4 flex flex-col gap-6 shrink-0 h-full overflow-y-auto scrollbar-hide border-r border-border/10">
           <BatteryGauge
             percentage={data?.battery_charge || 0}
             status={status}
             voltage={data?.battery_voltage}
             runtime={data?.battery_runtime}
           />
-          <PowerStatus status={status} />
+          <div className="flex flex-col gap-6">
+            <PowerStatus status={status} />
+
+            <div className="pt-4 border-t border-border/20">
+              <h3 className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase mb-3 flex items-center justify-between">
+                Event Log
+                <HistoryIcon className="h-3 w-3 opacity-40" />
+              </h3>
+              <div className="space-y-2 max-h-[180px] overflow-y-auto scrollbar-hide">
+                {events && events.length > 0 ? (
+                  events.map((evt: any) => (
+                    <div key={evt.id} className="flex flex-col gap-0.5 group">
+                      <div className="flex items-center justify-between text-[9px] font-bold uppercase tracking-tighter">
+                        <span className={evt.type === 'warning' ? 'text-orange-500' : 'text-primary/40'}>{evt.type}</span>
+                        <span className="text-muted-foreground opacity-40">{evt.time}</span>
+                      </div>
+                      <p className="text-[10px] leading-tight text-foreground/70 group-hover:text-foreground transition-colors">{evt.message}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[10px] italic text-muted-foreground/40 text-center py-4">No events recorded</p>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* CENTER: Real-time Stats & Chart (50%) */}

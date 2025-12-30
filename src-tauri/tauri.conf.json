@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "ups-client",
+  "productName": "WinNUT Rust Client",
   "version": "0.1.0",
   "identifier": "com.admin.ups-client",
   "build": {
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Tauri UPS Monitor",
+        "title": "WinNUT Rust Client",
         "width": 1100,
         "height": 650,
         "resizable": false,

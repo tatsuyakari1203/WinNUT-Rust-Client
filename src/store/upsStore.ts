@@ -21,10 +21,30 @@ export const useUpsStore = create<UpsState>()(
         delaySeconds: 15,
       },
 
+      events: [],
+
       setUpsData: (data: UpsData) =>
         set((state) => {
           const now = new Date();
-          const timeStr = now.toLocaleTimeString();
+          const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+          // 0. Detect status changes for Event Log
+          const oldStatus = state.data?.status;
+          const newStatus = data.status;
+          let newEvents = state.events || [];
+
+          if (oldStatus && oldStatus !== newStatus) {
+            const isWarning = newStatus.includes('OB') || newStatus.includes('LB');
+            newEvents = [
+              {
+                id: Math.random().toString(36).substring(2, 9),
+                time: timeStr,
+                message: `${oldStatus} → ${newStatus}`,
+                type: (isWarning ? 'warning' : 'info') as 'warning' | 'info'
+              },
+              ...newEvents
+            ].slice(0, 10); // Keep last 10 events for compactness
+          }
 
           // 1. Calculate Power Watts if missing
           let watts = data.power_watts || 0;
@@ -57,6 +77,7 @@ export const useUpsStore = create<UpsState>()(
           return {
             data,
             history: newHistory,
+            events: newEvents,
             lastUpdated: now.getTime(),
           };
         }),
@@ -66,6 +87,7 @@ export const useUpsStore = create<UpsState>()(
       setFullLoadRuntime: (minutes) => set({ fullLoadRuntime: minutes }),
       setConfig: (config) => set({ config }),
       setShutdownConfig: (shutdownConfig) => set({ shutdownConfig }),
+      clearEvents: () => set({ events: [] }),
     }),
     {
       name: 'ups-storage',
@@ -74,6 +96,7 @@ export const useUpsStore = create<UpsState>()(
         fullLoadRuntime: state.fullLoadRuntime,
         config: state.config,
         shutdownConfig: state.shutdownConfig,
+        events: state.events,
       }),
     }
   )
