@@ -145,10 +145,33 @@ export default function App() {
 
         {/* CENTER: Real-time Stats & Chart (50%) */}
         <section className="flex-1 p-4 flex flex-col gap-6 h-full min-w-0">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
-            <StatusCard title="Input" value={data?.input_voltage} unit="V" icon={Plug} />
-            <StatusCard title="Output" value={data?.output_voltage} unit="V" icon={Waves} />
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8 shrink-0">
+            <StatusCard
+              title="Input Volt"
+              value={data?.input_voltage}
+              unit="V"
+              icon={Plug}
+            />
+            <StatusCard
+              title="Output Volt"
+              value={data?.output_voltage}
+              unit="V"
+              icon={Waves}
+            />
             <StatusCard title="Load" value={data?.ups_load} unit="%" icon={Cpu} />
+
+            <StatusCard
+              title="Input Freq"
+              value={data?.input_frequency}
+              unit="Hz"
+              icon={Activity}
+            />
+            <StatusCard
+              title="Output Freq"
+              value={data?.output_frequency}
+              unit="Hz"
+              icon={Activity}
+            />
             <StatusCard title="Power" value={data?.power_watts ? Math.round(data.power_watts) : "--"} unit="W" icon={Server} />
           </div>
 
