@@ -1,3 +1,4 @@
+// Release Trigger
 import { useEffect } from 'react';
 import { useUpsStore } from './store/upsStore';
 import { invoke } from '@tauri-apps/api/core';
