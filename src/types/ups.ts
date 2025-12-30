@@ -13,6 +13,7 @@ export interface UpsData {
   output_frequency_nominal?: number;
   ups_load?: number;
   ups_realpower_nominal?: number;
+  ups_power_nominal?: number; // VA
   power_watts?: number;
   ups_mfr?: string;
   ups_model?: string;
@@ -21,6 +22,7 @@ export interface UpsData {
   ups_type?: string;
   ups_beeper_status?: string;
   driver_version?: string;
+  driver_name?: string;
 }
 
 export interface UpsState {
@@ -30,8 +32,10 @@ export interface UpsState {
   isConnected: boolean;
   lastUpdated: number | null;
   ratedPower: number | null; // Manually configured rated power
+  fullLoadRuntime: number | null; // Minutes at 100% load
   setUpsData: (data: UpsData) => void;
   setError: (error: string | null) => void;
   setConnected: (isConnected: boolean) => void;
   setRatedPower: (watts: number | null) => void;
+  setFullLoadRuntime: (minutes: number | null) => void;
 }

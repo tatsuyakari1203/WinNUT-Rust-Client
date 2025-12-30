@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { UpsState } from '../types/ups';
+import { UpsState, UpsData } from '../types/ups';
 
 export const useUpsStore = create<UpsState>()(
   persist(
@@ -10,27 +10,32 @@ export const useUpsStore = create<UpsState>()(
       isConnected: false,
       lastUpdated: null,
       error: null,
-      ratedPower: null,
-      setUpsData: (data) =>
+      ratedPower: 1800, // Default for 3000VA
+      fullLoadRuntime: 30, // Default to match WinNut optimism
+
+      setUpsData: (data: UpsData) =>
         set((state) => {
           const now = new Date();
           const timeStr = now.toLocaleTimeString();
 
-          // Calculate watts if missing from backend but we have manual rated power
+          // 1. Calculate Power Watts if missing
           let watts = data.power_watts || 0;
+          const nominalWatts = state.ratedPower || 1800;
 
-          // Logic: If backend provides 0 or undefined watts, AND we have load %, AND we have ratedPower
-          // Then calculate it.
-          // Note: Some UPS report 0 watts when load is very low, but usually load > 0 means watts > 0.
-          if ((!data.power_watts || data.power_watts === 0) && state.ratedPower && data.ups_load) {
-            watts = Math.round(state.ratedPower * (data.ups_load / 100));
-            // Update the data object locally so UI components see it too
+          if ((!data.power_watts || data.power_watts === 0) && data.ups_load) {
+            watts = Math.round(nominalWatts * (data.ups_load / 100));
             data.power_watts = watts;
-
-            // If backend didn't report nominal, fill it with ours for display
             if (!data.ups_realpower_nominal) {
-              data.ups_realpower_nominal = state.ratedPower;
+              data.ups_realpower_nominal = nominalWatts;
             }
+          }
+
+          // 2. Estimate Runtime if missing
+          const estMins = state.fullLoadRuntime || 30;
+          if (!data.battery_runtime && data.ups_load && data.ups_load > 0) {
+            const chargeFactor = (data.battery_charge || 100) / 100;
+            const loadFactor = 100 / data.ups_load;
+            data.battery_runtime = Math.round((estMins * 60) * loadFactor * chargeFactor);
           }
 
           const newHistoryItem = {
@@ -39,23 +44,25 @@ export const useUpsStore = create<UpsState>()(
             watts: watts
           };
 
-          // Keep last 60 points
           const newHistory = [...state.history, newHistoryItem].slice(-60);
 
           return {
             data,
             history: newHistory,
-            lastUpdated: now.getTime(), // Store as timestamp number
+            lastUpdated: now.getTime(),
           };
         }),
-      setIsConnected: (connected) => set({ isConnected: connected }),
       setError: (error) => set({ error }),
       setConnected: (isConnected) => set({ isConnected }),
       setRatedPower: (watts) => set({ ratedPower: watts }),
+      setFullLoadRuntime: (minutes) => set({ fullLoadRuntime: minutes }),
     }),
     {
       name: 'ups-storage',
-      partialize: (state) => ({ ratedPower: state.ratedPower }), // Only persist ratedPower
+      partialize: (state) => ({
+        ratedPower: state.ratedPower,
+        fullLoadRuntime: state.fullLoadRuntime
+      }),
     }
   )
 );

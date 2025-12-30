@@ -14,26 +14,27 @@ export function SettingsModal() {
   const [username, setUsername] = useState("monuser");
   const [password, setPassword] = useState("secret");
   const [ratedPowerInput, setRatedPowerInput] = useState("");
+  const [fullLoadRuntimeInput, setFullLoadRuntimeInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { setRatedPower, ratedPower } = useUpsStore();
+  const { setRatedPower, ratedPower, fullLoadRuntime, setFullLoadRuntime } = useUpsStore();
 
   // Load initial value from store when modal opens or value changes
   useEffect(() => {
     if (ratedPower) {
       setRatedPowerInput(ratedPower.toString());
     }
-  }, [ratedPower]);
+    if (fullLoadRuntime) {
+      setFullLoadRuntimeInput(fullLoadRuntime.toString());
+    }
+  }, [ratedPower, fullLoadRuntime]);
 
   const handleConnect = async () => {
     setLoading(true);
 
     // Save settings to store
-    if (ratedPowerInput) {
-      setRatedPower(Number(ratedPowerInput));
-    } else {
-      setRatedPower(null);
-    }
+    setRatedPower(ratedPowerInput ? Number(ratedPowerInput) : null);
+    setFullLoadRuntime(fullLoadRuntimeInput ? Number(fullLoadRuntimeInput) : null);
 
     try {
       await invoke('connect_nut', {
@@ -94,8 +95,18 @@ export function SettingsModal() {
             className="col-span-3"
           />
 
+          <Label htmlFor="runtime" className="text-right">Full Load (min)</Label>
+          <Input
+            id="runtime"
+            type="number"
+            placeholder="e.g. 30"
+            value={fullLoadRuntimeInput}
+            onChange={(e) => setFullLoadRuntimeInput(e.target.value)}
+            className="col-span-3"
+          />
+
           <div className="col-span-4 text-[10px] text-muted-foreground text-center">
-            * Enter rated watts if your UPS doesn't report it.
+            * Values used for Power & Runtime estimation if UPS doesn't report them.
           </div>
         </div>
 

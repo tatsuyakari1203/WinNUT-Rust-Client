@@ -1,9 +1,9 @@
 import { Progress } from "@/components/ui/progress";
-import { Battery, BatteryCharging, BatteryWarning, Zap } from "lucide-react";
+import { Battery, BatteryCharging, BatteryWarning } from "lucide-react";
 
 interface BatteryGaugeProps {
   percentage: number | undefined;
-  status: string; // "OL", "OB", etc.
+  status: string;
   voltage: number | undefined;
   runtime: number | undefined;
 }
@@ -23,47 +23,48 @@ export function BatteryGauge({ percentage = 0, status, voltage, runtime }: Batte
     statusColor = "text-yellow-500";
   }
 
+  const formatRuntime = (seconds: number | undefined) => {
+    if (seconds === undefined || seconds <= 0) return "--:--:--";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col items-center justify-center py-6 space-y-4">
-        <div className="relative">
+    <div className="w-full flex flex-col items-center">
+      <div className="flex flex-col items-center mb-4">
+        <div className="relative mb-1">
           {isCharging ? (
-            <BatteryCharging className={`h-20 w-20 ${statusColor} animate-pulse`} />
+            <BatteryCharging className={`h-12 w-12 ${statusColor} animate-pulse`} />
           ) : isOnBattery ? (
-            <BatteryWarning className={`h-20 w-20 text-red-500 animate-pulse`} />
+            <BatteryWarning className={`h-12 w-12 text-red-500 animate-pulse`} />
           ) : (
-            <Battery className={`h-20 w-20 ${statusColor}`} />
+            <Battery className={`h-12 w-12 ${statusColor}`} />
           )}
         </div>
-
-        <div className="text-center">
-          <div className="text-5xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-50">
-            {percentage}%
-          </div>
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
-            Battery Charge
-          </div>
+        <div className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 leading-none">
+          {percentage}%
+        </div>
+        <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+          Charge
         </div>
       </div>
 
-      <div className="space-y-2 px-2">
-        <Progress value={percentage} className={`h-1.5 ${colorClass} bg-zinc-100 dark:bg-zinc-800`} />
-      </div>
+      <Progress value={percentage} className={`h-1 w-full ${colorClass} bg-zinc-100 dark:bg-zinc-800 mb-4`} />
 
-      <div className="grid grid-cols-2 gap-8 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-        <div className="flex flex-col items-center justify-center space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Voltage</span>
-          <div className="flex items-center space-x-1">
-            <Zap className="h-3 w-3 text-yellow-500" />
-            <span className="text-xl font-bold text-zinc-900 dark:text-zinc-50">{voltage || "--"}</span>
-            <span className="text-xs font-medium text-muted-foreground">V</span>
+      <div className="w-full grid grid-cols-2 gap-4 pt-2 border-t border-zinc-50 dark:border-zinc-800/50">
+        <div className="flex flex-col">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Voltage</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{voltage || "--"}</span>
+            <span className="text-[10px] text-muted-foreground">V</span>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center space-y-1 border-l border-zinc-100 dark:border-zinc-800">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Runtime</span>
-          <div className="flex items-center space-x-1">
-            <span className="text-xl font-bold text-zinc-900 dark:text-zinc-50">{runtime ? Math.floor(runtime / 60) : "--"}</span>
-            <span className="text-xs font-medium text-muted-foreground">min</span>
+        <div className="flex flex-col border-l border-zinc-50 dark:border-zinc-800/50 pl-4">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Remaining</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm font-bold text-zinc-900 dark:text-zinc-50 font-mono tracking-tight">{formatRuntime(runtime)}</span>
           </div>
         </div>
       </div>
