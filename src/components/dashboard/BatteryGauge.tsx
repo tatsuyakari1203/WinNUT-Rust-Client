@@ -32,15 +32,15 @@ export function BatteryGauge({ percentage = 0, status, voltage, runtime }: Batte
   };
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="flex flex-col items-center mb-4">
-        <div className="relative mb-1">
+    <div className="w-full flex flex-col items-center py-2">
+      <div className="flex flex-col items-center mb-6">
+        <div className="relative mb-2">
           {isCharging ? (
-            <BatteryCharging className={`h-12 w-12 ${statusColor} animate-pulse`} />
+            <BatteryCharging className={`h-14 w-14 ${statusColor} animate-pulse drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]`} />
           ) : isOnBattery ? (
-            <BatteryWarning className={`h-12 w-12 text-red-500 animate-pulse`} />
+            <BatteryWarning className={`h-14 w-14 text-red-500 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]`} />
           ) : (
-            <Battery className={`h-12 w-12 ${statusColor}`} />
+            <Battery className={`h-14 w-14 ${statusColor} drop-shadow-[0_0_10px_rgba(34,197,94,0.2)]`} />
           )}
         </div>
         <div className="text-3xl font-bold tracking-tight text-foreground leading-none">

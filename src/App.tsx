@@ -115,13 +115,19 @@ function App() {
             <StatusCard title="Power" value={data?.power_watts ? Math.round(data.power_watts) : "--"} unit="W" icon={Server} />
           </div>
 
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-2">
+          <div className="flex-1 flex flex-col min-h-0 bg-muted/5 rounded-lg p-2 border border-border/5">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Activity className="h-3 w-3 text-zinc-500" />
-                <h3 className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Usage Trend</h3>
+                <Activity className="h-3 w-3 text-primary/60" />
+                <h3 className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">Usage Trend</h3>
               </div>
-              <span className="text-[9px] font-bold text-green-500">LIVE</span>
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                </span>
+                <span className="text-[9px] font-bold text-green-500/80 tracking-widest">LIVE</span>
+              </div>
             </div>
             <div className="flex-1 w-full min-h-0">
               <LoadChart data={history} />
@@ -130,17 +136,17 @@ function App() {
         </section>
 
         {/* RIGHT: Detailed Info (30%) */}
-        <section className="w-[30%] p-4 flex flex-col gap-4 shrink-0 h-full overflow-y-auto bg-muted/20">
-          <h3 className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase border-b border-border pb-1 mb-1">System Information</h3>
+        <section className="w-[30%] p-4 flex flex-col gap-4 shrink-0 h-full overflow-y-auto bg-muted/10 premium-gradient scrollbar-hide">
+          <h3 className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase border-b border-border/40 pb-2 mb-2">System Information</h3>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <h4 className="text-[11px] font-bold text-muted-foreground mb-1.5 uppercase">Identity</h4>
-              <dl className="space-y-1 text-[11px]">
-                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Manufacturer</dt><dd className="font-medium text-right truncate">{data?.ups_mfr || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Model</dt><dd className="font-medium text-right truncate">{data?.ups_model || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Serial</dt><dd className="font-medium text-right truncate">{data?.ups_serial || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Firmware</dt><dd className="font-medium text-right truncate">{data?.ups_firmware || "--"}</dd></div>
+              <h4 className="text-[10px] font-bold text-primary/40 mb-3 uppercase tracking-wider">Identity</h4>
+              <dl className="space-y-2 text-[11px]">
+                <div className="flex justify-between gap-4 border-b border-border/20 pb-1.5 hover:border-border/60 transition-colors group"><dt className="text-muted-foreground group-hover:text-foreground/80 transition-colors">Manufacturer</dt><dd className="font-semibold text-right truncate text-foreground/90">{data?.ups_mfr || "--"}</dd></div>
+                <div className="flex justify-between gap-4 border-b border-border/20 pb-1.5 hover:border-border/60 transition-colors group"><dt className="text-muted-foreground group-hover:text-foreground/80 transition-colors">Model</dt><dd className="font-semibold text-right truncate text-foreground/90">{data?.ups_model || "--"}</dd></div>
+                <div className="flex justify-between gap-4 border-b border-border/20 pb-1.5 hover:border-border/60 transition-colors group"><dt className="text-muted-foreground group-hover:text-foreground/80 transition-colors">Serial</dt><dd className="font-semibold text-right truncate text-foreground/90">{data?.ups_serial || "--"}</dd></div>
+                <div className="flex justify-between gap-4 border-b border-border/20 pb-1.5 hover:border-border/60 transition-colors group"><dt className="text-muted-foreground group-hover:text-foreground/80 transition-colors">Firmware</dt><dd className="font-semibold text-right truncate text-foreground/90">{data?.ups_firmware || "--"}</dd></div>
               </dl>
             </div>
 
