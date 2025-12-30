@@ -7,6 +7,31 @@ use tokio::sync::Mutex;
 // We need a thread-safe wrapper for the client
 pub struct NutState(pub Arc<Mutex<Option<NutClient>>>);
 
+/// Creates a simple 32x32 solid color circle icon programmatically
+fn create_status_icon(r: u8, g: u8, b: u8) -> tauri::image::Image<'static> {
+    let size = 32;
+    let mut rgba = vec![0u8; size * size * 4];
+    let center = size as f32 / 2.0;
+    let radius = size as f32 / 2.0 - 2.0;
+
+    for y in 0..size {
+        for x in 0..size {
+            let dx = x as f32 - center + 0.5;
+            let dy = y as f32 - center + 0.5;
+            let dist_sq = dx * dx + dy * dy;
+
+            if dist_sq <= radius * radius {
+                let idx = (y * size + x) * 4;
+                rgba[idx] = r;
+                rgba[idx + 1] = g;
+                rgba[idx + 2] = b;
+                rgba[idx + 3] = 255; // Alpha
+            }
+        }
+    }
+    tauri::image::Image::new_owned(rgba, size as u32, size as u32)
+}
+
 #[tauri::command]
 pub async fn connect_nut(state: State<'_, NutState>, config: NutConfig) -> Result<String, String> {
     let mut client = NutClient::new(config);
@@ -74,6 +99,18 @@ pub async fn start_background_polling(
                     if let Err(e) = app.emit("ups-update", &data) {
                         eprintln!("Failed to emit ups-update: {e}");
                     }
+
+                    // Dynamic tray icon update (Programmatic RGBA)
+                    if let Some(tray) = app.tray_by_id("main") {
+                        let icon = if data.status.contains("LB") {
+                            create_status_icon(239, 68, 68) // Red
+                        } else if data.status.contains("OB") {
+                            create_status_icon(249, 115, 22) // Orange
+                        } else {
+                            create_status_icon(34, 197, 94) // Green
+                        };
+                        let _ = tray.set_icon(Some(icon));
+                    }
                 }
                 Err(_e) => {
                     // eprintln!("Polling error: {}", e);
@@ -92,17 +129,17 @@ pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
 
         let mut cmd = match action_type.as_str() {
             "Shutdown" => {
-                let mut c = Command::new("shutdown");
+                let mut c = Command::new("C:\\Windows\\System32\\shutdown.exe");
                 c.args(["/s", "/t", "0", "/f"]);
                 c
             }
             "Hibernate" => {
-                let mut c = Command::new("shutdown");
+                let mut c = Command::new("C:\\Windows\\System32\\shutdown.exe");
                 c.arg("/h");
                 c
             }
             "Sleep" => {
-                let mut c = Command::new("rundll32.exe");
+                let mut c = Command::new("C:\\Windows\\System32\\rundll32.exe");
                 c.args(["powrprof.dll,SetSuspendState", "0,1,0"]);
                 c
             }

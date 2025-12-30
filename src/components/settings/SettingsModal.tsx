@@ -28,6 +28,9 @@ export function SettingsModal() {
   const [stopType, setStopType] = useState<ShutdownType>(shutdownConfig.stopType);
   const [delaySeconds, setDelaySeconds] = useState(shutdownConfig.delaySeconds.toString());
 
+  // Test Countdown State
+  const [testCountdown, setTestCountdown] = useState<number | null>(null);
+
   useEffect(() => {
     if (config) {
       setHost(config.host);
@@ -36,6 +39,22 @@ export function SettingsModal() {
       setPassword(config.password || "");
     }
   }, [config]);
+
+  useEffect(() => {
+    let timer: number | null = null;
+    if (testCountdown !== null && testCountdown > 0) {
+      timer = window.setInterval(() => {
+        setTestCountdown(prev => (prev !== null ? prev - 1 : null));
+      }, 1000);
+    } else if (testCountdown === 0) {
+      invoke('trigger_system_stop', { actionType: stopType })
+        .catch(err => alert(`Error: ${err}`));
+      setTestCountdown(null);
+    }
+    return () => {
+      if (timer) window.clearInterval(timer);
+    };
+  }, [testCountdown, stopType]);
 
   const handleSave = async () => {
     // 1. Save connection settings (even if not connecting now)
@@ -204,6 +223,32 @@ export function SettingsModal() {
                     <Input value={delaySeconds} onChange={(e) => setDelaySeconds(e.target.value)} className="h-8 text-[11px] bg-muted/20 border-border/50" />
                     <span className="text-[10px] text-muted-foreground font-bold">SEC</span>
                   </div>
+                </div>
+
+                <div className="pt-2">
+                  {testCountdown === null ? (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="w-full h-8 text-[10px] font-bold uppercase tracking-widest bg-destructive/80 hover:bg-destructive shadow-lg shadow-destructive/20"
+                      onClick={() => {
+                        if (confirm(`CAUTION: This will initiate a 15-second countdown to ${stopType}. Save all work first. Proceed?`)) {
+                          setTestCountdown(15);
+                        }
+                      }}
+                    >
+                      Test {stopType} Now
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-8 text-[10px] font-bold uppercase tracking-widest border-destructive text-destructive hover:bg-destructive hover:text-white animate-pulse"
+                      onClick={() => setTestCountdown(null)}
+                    >
+                      CANCEL TEST ({testCountdown}s)
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
