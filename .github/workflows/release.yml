@@ -2,8 +2,10 @@ name: "Release"
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'v*' # Trigger on version tags like v1.0.0
+      - 'v*'
 
 jobs:
   publish:
@@ -13,11 +15,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: "windows-latest" # Currently focusing on Windows as per project goals
+          - platform: "windows-latest"
 
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for tagging
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -26,8 +30,6 @@ jobs:
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: install Bun
         uses: oven-sh/setup-bun@v2
@@ -37,13 +39,30 @@ jobs:
       - name: install dependencies
         run: bun install
 
+      - name: Bump version and push tag
+        id: tag_version
+        uses: anothrNick/github-tag-action@1.64.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: patch
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          echo "changelog=$(git log --pretty=format:'- %s' $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
-          releaseName: "WinNUT Rust Client v__VERSION__"
-          releaseBody: "See the assets, our premium UPS monitoring client for Windows."
-          releaseDraft: true
+          tagName: ${{ steps.tag_version.outputs.new_tag }}
+          releaseName: "WinNUT Rust Client ${{ steps.tag_version.outputs.new_tag }}"
+          releaseBody: |
+            ### 📝 What's Changed
+            ${{ steps.changelog.outputs.changelog }}
+
+            *Automated release by GitHub Actions.*
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
