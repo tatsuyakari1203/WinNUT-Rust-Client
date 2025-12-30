@@ -88,8 +88,6 @@ pub async fn start_background_polling(
                 if let Some(client) = guard.as_mut() {
                     client.get_ups_data(&ups_name).await
                 } else {
-                    // Not connected, maybe break loop or just wait?
-                    // For now, we continue waiting for connection
                     Err(crate::nut::client::NutError::ConnectionFailed)
                 }
             };
@@ -100,7 +98,6 @@ pub async fn start_background_polling(
                         eprintln!("Failed to emit ups-update: {e}");
                     }
 
-                    // Dynamic tray icon update (Programmatic RGBA)
                     if let Some(tray) = app.tray_by_id("main") {
                         let icon = if data.status.contains("LB") {
                             create_status_icon(239, 68, 68) // Red
@@ -112,15 +109,14 @@ pub async fn start_background_polling(
                         let _ = tray.set_icon(Some(icon));
                     }
                 }
-                Err(_e) => {
-                    // eprintln!("Polling error: {}", e);
-                }
+                Err(_e) => {}
             }
         }
     });
 
     Ok(())
 }
+
 #[tauri::command]
 pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
     #[cfg(target_os = "windows")]
@@ -155,5 +151,55 @@ pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
     #[cfg(not(target_os = "windows"))]
     {
         Err("Offline actions only supported on Windows".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn scan_nut_network(subnet_prefix: String) -> Result<Vec<String>, String> {
+    let mut tasks = Vec::new();
+    let port = 3493;
+
+    for i in 1..=254 {
+        let ip = format!("{}.{}", subnet_prefix, i);
+        let addr = format!("{}:{}", ip, port);
+
+        tasks.push(tokio::spawn(async move {
+            let timeout = std::time::Duration::from_millis(300);
+            match tokio::time::timeout(timeout, tokio::net::TcpStream::connect(&addr)).await {
+                Ok(Ok(_)) => Some(ip),
+                _ => None,
+            }
+        }));
+    }
+
+    let mut discovered = Vec::new();
+    for task in tasks {
+        if let Ok(Some(ip)) = task.await {
+            discovered.push(ip);
+        }
+    }
+
+    Ok(discovered)
+}
+
+#[tauri::command]
+pub async fn list_ups_on_server(host: String, port: u16) -> Result<Vec<String>, String> {
+    let mut client = NutClient::new(NutConfig {
+        host: host.clone(),
+        port,
+        username: None,
+        password: None,
+    });
+
+    match client.connect().await {
+        Ok(_) => {
+            let result = client.list_ups_names().await;
+            let _ = client.disconnect().await;
+            match result {
+                Ok(names) => Ok(names),
+                Err(e) => Err(format!("Failed to list UPS: {e}")),
+            }
+        }
+        Err(e) => Err(format!("Failed to connect to {host}:{port}: {e}")),
     }
 }

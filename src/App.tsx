@@ -43,7 +43,7 @@ export default function App() {
           console.log("Attempting auto-connect to:", config.host);
           await invoke('connect_nut', { config });
           await invoke('start_background_polling', {
-            upsName: 'ups',
+            upsName: config.ups_name || 'ups',
             intervalMs: 1000
           });
           setConnected(true);

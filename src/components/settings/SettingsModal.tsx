@@ -15,11 +15,18 @@ export function SettingsModal() {
 
   // Connection State
   const [host, setHost] = useState(config?.host || "");
-  const [port, setPort] = useState(config?.port?.toString() || "");
+  const [port, setPort] = useState(config?.port?.toString() || "3493");
   const [username, setUsername] = useState(config?.username || "");
   const [password, setPassword] = useState(config?.password || "");
+  const [upsName, setUpsName] = useState(config?.ups_name || "ups");
   const [ratedPowerInput, setRatedPowerInput] = useState(ratedPower?.toString() || "");
   const [fullLoadRuntimeInput, setFullLoadRuntimeInput] = useState(fullLoadRuntime?.toString() || "");
+
+  // Discovery State
+  const [isScanning, setIsScanning] = useState(false);
+  const [discoveredIps, setDiscoveredIps] = useState<string[]>([]);
+  const [upsNames, setUpsNames] = useState<string[]>([]);
+  const [isFetchingUps, setIsFetchingUps] = useState(false);
 
   // Shutdown State
   const [shutdownEnabled, setShutdownEnabled] = useState(shutdownConfig.enabled);
@@ -37,6 +44,7 @@ export function SettingsModal() {
       setPort(config.port.toString());
       setUsername(config.username || "");
       setPassword(config.password || "");
+      setUpsName(config.ups_name || "ups");
     }
   }, [config]);
 
@@ -57,24 +65,23 @@ export function SettingsModal() {
   }, [testCountdown, stopType]);
 
   const handleSave = async () => {
-    // 1. Save connection settings (even if not connecting now)
     const newConfig = {
       host,
-      port: parseInt(port),
+      port: parseInt(port) || 3493,
       username,
-      password
+      password,
+      ups_name: upsName
     };
     setConfig(newConfig);
-    setRatedPower(parseInt(ratedPowerInput));
-    setFullLoadRuntime(parseInt(fullLoadRuntimeInput));
+    setRatedPower(parseInt(ratedPowerInput) || 0);
+    setFullLoadRuntime(parseInt(fullLoadRuntimeInput) || 0);
 
-    // 2. Save shutdown config
     setShutdownConfig({
       enabled: shutdownEnabled,
-      batteryThreshold: parseInt(batteryThreshold),
-      runtimeThreshold: parseInt(runtimeThreshold),
+      batteryThreshold: parseInt(batteryThreshold) || 30,
+      runtimeThreshold: parseInt(runtimeThreshold) || 120,
       stopType,
-      delaySeconds: parseInt(delaySeconds),
+      delaySeconds: parseInt(delaySeconds) || 15,
     });
 
     setOpen(false);
@@ -84,24 +91,56 @@ export function SettingsModal() {
     try {
       const newConfig = {
         host,
-        port: parseInt(port),
+        port: parseInt(port) || 3493,
         username,
-        password
+        password,
+        ups_name: upsName
       };
 
       await invoke("connect_nut", { config: newConfig });
       setConfig(newConfig);
       setConnected(true);
 
-      // Auto-start polling on manual connect
       await invoke("start_background_polling", {
-        upsName: "ups",
-        intervalMs: 2000
+        upsName: newConfig.ups_name,
+        intervalMs: 1000
       });
 
       setOpen(false);
     } catch (e) {
       alert(e);
+    }
+  };
+
+  const handleScanNetwork = async () => {
+    setIsScanning(true);
+    setDiscoveredIps([]);
+    try {
+      const prefix = host.split('.').slice(0, 3).join('.') || "192.168.1";
+      const ips = await invoke<string[]>("scan_nut_network", { subnetPrefix: prefix });
+      setDiscoveredIps(ips);
+      if (ips.length === 0) alert("No NUT servers found in " + prefix + ".0/24");
+    } catch (e) {
+      alert("Scan failed: " + e);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleFetchUps = async (selectedHost: string) => {
+    setHost(selectedHost);
+    setIsFetchingUps(true);
+    try {
+      const names = await invoke<string[]>("list_ups_on_server", {
+        host: selectedHost,
+        port: parseInt(port) || 3493
+      });
+      setUpsNames(names);
+      if (names.length > 0) setUpsName(names[0]);
+    } catch (e) {
+      alert("Failed to fetch UPS names: " + e);
+    } finally {
+      setIsFetchingUps(false);
     }
   };
 
@@ -112,7 +151,7 @@ export function SettingsModal() {
           <Settings className="h-3.5 w-3.5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[450px] bg-background border-border p-0 gap-0 overflow-hidden shadow-2xl">
+      <DialogContent className="sm:max-w-[550px] bg-background border-border p-0 gap-0 overflow-hidden shadow-2xl">
         <DialogHeader className="p-4 border-b border-border bg-muted/20">
           <DialogTitle className="text-sm font-bold flex items-center gap-2">
             <Settings className="h-4 w-4 text-primary" />
@@ -120,9 +159,7 @@ export function SettingsModal() {
           </DialogTitle>
         </DialogHeader>
 
-        {/* Tabs Content */}
-        <div className="flex h-[320px]">
-          {/* Sidebar Tabs */}
+        <div className="flex h-[400px]">
           <div className="w-[140px] border-r border-border bg-muted/10 p-2 flex flex-col gap-1">
             <button
               onClick={() => setActiveTab('connection')}
@@ -140,14 +177,73 @@ export function SettingsModal() {
             </button>
           </div>
 
-          {/* Main Form */}
           <div className="flex-1 p-6 overflow-y-auto scrollbar-hide">
             {activeTab === 'connection' ? (
               <div className="grid gap-5">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="host" className="text-right text-[11px] font-bold text-muted-foreground uppercase">Host</Label>
-                  <Input id="host" value={host} onChange={(e) => setHost(e.target.value)} placeholder="e.g. 192.168.1.10" className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="host" className="text-right text-[11px] font-bold text-muted-foreground uppercase pt-2">Host</Label>
+                  <div className="col-span-3 space-y-2">
+                    <div className="flex gap-2">
+                      <Input id="host" value={host} onChange={(e) => setHost(e.target.value)} placeholder="e.g. 192.168.1.10" className="h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleScanNetwork}
+                        disabled={isScanning}
+                        className="h-8 text-[10px] font-bold px-3 shrink-0"
+                      >
+                        {isScanning ? "..." : "Scan"}
+                      </Button>
+                    </div>
+                    {discoveredIps.length > 0 && (
+                      <div className="flex flex-wrap gap-1 p-1 bg-muted/10 rounded-md border border-border/20">
+                        {discoveredIps.map(ip => (
+                          <button
+                            key={ip}
+                            onClick={() => handleFetchUps(ip)}
+                            className="px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-[9px] font-bold text-primary transition-colors"
+                          >
+                            {ip}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="upsname" className="text-right text-[11px] font-bold text-muted-foreground uppercase">UPS Name</Label>
+                  <div className="col-span-3 flex gap-2">
+                    {upsNames.length > 0 ? (
+                      <select
+                        id="upsname"
+                        value={upsName}
+                        onChange={(e) => setUpsName(e.target.value)}
+                        className="flex-1 h-8 bg-muted/20 border border-border/50 rounded-md px-2 text-[11px] font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+                      >
+                        {upsNames.map(n => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                    ) : (
+                      <Input
+                        id="upsname"
+                        value={upsName}
+                        onChange={(e) => setUpsName(e.target.value)}
+                        placeholder="e.g. ups"
+                        className="flex-1 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all"
+                      />
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFetchUps(host)}
+                      disabled={isFetchingUps || !host}
+                      className="h-8 px-2 text-primary hover:bg-primary/10"
+                    >
+                      {isFetchingUps ? "..." : <Server className="h-3 w-3" />}
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="port" className="text-right text-[11px] font-bold text-muted-foreground uppercase">Port</Label>
                   <Input id="port" value={port} onChange={(e) => setPort(e.target.value)} placeholder="3493" className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />

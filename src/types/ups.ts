@@ -30,6 +30,7 @@ export interface NutConfig {
   port: number;
   username?: string;
   password?: string;
+  ups_name: string;
 }
 
 export type ShutdownType = 'Shutdown' | 'Hibernate' | 'Sleep';

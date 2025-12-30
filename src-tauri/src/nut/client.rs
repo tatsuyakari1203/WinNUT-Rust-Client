@@ -97,4 +97,19 @@ impl NutClient {
         let response = self.send_cmd(&cmd).await?;
         Ok(super::parser::parse_list_vars(&response))
     }
+
+    pub async fn list_ups_names(&mut self) -> Result<Vec<String>, NutError> {
+        let response = self.send_cmd("LIST UPS").await?;
+        let mut names = Vec::new();
+        for line in response.lines() {
+            if line.starts_with("UPS ") {
+                // Format: UPS <name> "<description>"
+                let parts: Vec<&str> = line.splitn(3, ' ').collect();
+                if parts.len() >= 2 {
+                    names.push(parts[1].to_string());
+                }
+            }
+        }
+        Ok(names)
+    }
 }
