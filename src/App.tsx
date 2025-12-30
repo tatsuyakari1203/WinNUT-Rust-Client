@@ -22,13 +22,14 @@ import { SettingsModal } from './components/settings/SettingsModal';
 import { useShutdownMonitor } from './hooks/useShutdownMonitor';
 import { useUpsData } from './hooks/useUpsData';
 import { useNotifications } from './hooks/useNotifications';
+import { toast, Toaster } from 'sonner';
 
 const appWindow = getCurrentWindow();
 
 export default function App() {
   useUpsData();
   useNotifications();
-  const { data, history, setConnected, config, shutdownConfig, events } = useUpsStore();
+  const { data, history, setConnected, config, shutdownConfig, events, supportedCommands, setSupportedCommands } = useUpsStore();
   const { countdown } = useShutdownMonitor();
 
   const status = data?.status || "UNKNOWN";
@@ -42,10 +43,19 @@ export default function App() {
         try {
           console.log("Attempting auto-connect to:", config.host);
           await invoke('connect_nut', { config });
+
           await invoke('start_background_polling', {
             upsName: config.ups_name || 'ups',
             intervalMs: 1000
           });
+
+          try {
+            const cmds = await invoke<string[]>("list_ups_commands", { upsName: config.ups_name || "ups" });
+            setSupportedCommands(cmds);
+          } catch (e) {
+            console.warn("Auto-connect command fetch failed:", e);
+          }
+
           setConnected(true);
         } catch (err) {
           console.error("Auto-connect failed:", err);
@@ -211,16 +221,6 @@ export default function App() {
             </div>
 
             <div>
-              <h4 className="text-[11px] font-bold text-muted-foreground mb-1.5 uppercase">Capability</h4>
-              <dl className="space-y-1 text-[11px]">
-                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Type</dt><dd className="font-medium">{data?.ups_type || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Nom. Power</dt><dd className="font-medium">{data?.ups_realpower_nominal ? `${data.ups_realpower_nominal}W` : "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Nom. Volt</dt><dd className="font-medium">{data?.output_voltage_nominal || "--"}V</dd></div>
-                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Nom. Freq</dt><dd className="font-medium">{data?.output_frequency_nominal || "--"}Hz</dd></div>
-              </dl>
-            </div>
-
-            <div>
               <h4 className="text-[11px] font-bold text-muted-foreground mb-1.5 uppercase">Service</h4>
               <dl className="space-y-1 text-[11px]">
                 <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Driver</dt><dd className="font-medium">{data?.driver_name || "--"}</dd></div>
@@ -228,6 +228,84 @@ export default function App() {
                 <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Beeper</dt><dd className="font-medium capitalize">{data?.ups_beeper_status || "--"}</dd></div>
               </dl>
             </div>
+
+            {supportedCommands.length > 0 && (
+              <div className="pt-2">
+                <h4 className="text-[10px] font-bold text-muted-foreground mb-2 shadow-sm uppercase flex items-center gap-2">
+                  <Cpu className="h-3 w-3 text-primary/40" />
+                  Remote Control
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {supportedCommands.filter(c => c.includes('beeper') || c.includes('test') || c.includes('shutdown') || c.includes('load')).map(cmd => {
+                    const getFriendlyName = (c: string) => {
+                      const mappings: Record<string, string> = {
+                        'beeper.toggle': 'Toggle Alarm',
+                        'beeper.mute': 'Mute Beeper',
+                        'beeper.off': 'Disable Beeper',
+                        'beeper.on': 'Enable Beeper',
+                        'test.battery.start': 'Start Deep Test',
+                        'test.battery.start.quick': 'Quick Battery Test',
+                        'test.battery.stop': 'Stop Test',
+                        'shutdown.return': 'UPS: Reboot Load',
+                        'shutdown.stayoff': 'UPS: Cut Power',
+                        'shutdown.stop': 'Cancel Shutdown',
+                        'load.off': 'UPS: Emergency Stop',
+                        'load.on': 'UPS: Restore Power',
+                      };
+                      return mappings[c] || c.split('.').pop()?.toUpperCase() || c;
+                    };
+
+                    const getDescription = (c: string) => {
+                      const desc: Record<string, string> = {
+                        'beeper.toggle': 'Toggle the UPS internal alarm/beeper',
+                        'beeper.mute': 'Mute the beeper for the current power event',
+                        'beeper.off': 'Permanently disable the UPS beeper',
+                        'beeper.on': 'Re-enable the UPS beeper',
+                        'test.battery.start': 'Start a deep battery discharge test',
+                        'test.battery.start.quick': 'Perform a quick battery health check',
+                        'test.battery.stop': 'Stop the currently running battery test',
+                        'shutdown.return': 'Turn off load immediately and restart when power returns',
+                        'shutdown.stayoff': 'Turn off load and stay off until manual restart',
+                        'shutdown.stop': 'Cancel a pending system shutdown',
+                        'load.off': 'IMMEDIATELY cut power to all connected devices',
+                        'load.on': 'Restore power to the UPS output outlets',
+                      };
+                      return desc[c] || `Execute system command: ${c}`;
+                    };
+
+                    const isDangerous = cmd.startsWith('shutdown') || cmd.includes('load.off');
+
+                    return (
+                      <button
+                        key={cmd}
+                        title={getDescription(cmd)}
+                        onClick={async () => {
+                          if (isDangerous) {
+                            const confirmed = confirm(`CAUTION: Sending "${cmd}" may cut power to your devices. Are you sure you want to proceed?`);
+                            if (!confirmed) return;
+                          }
+                          try {
+                            await invoke("run_ups_command", {
+                              upsName: config?.ups_name || "ups",
+                              command: cmd
+                            });
+                            toast.success(`Command sent: ${getFriendlyName(cmd)}`);
+                          } catch (e) {
+                            toast.error(`Failed to run command: ${e}`);
+                          }
+                        }}
+                        className={`px-2 py-1.5 rounded-md border text-[9px] font-bold transition-all text-center uppercase tracking-tighter ${isDangerous
+                            ? 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20 shadow-sm'
+                            : 'bg-zinc-900/5 dark:bg-white/5 border-border hover:bg-primary/10 hover:border-primary/40 text-foreground/70 hover:text-primary shadow-sm'
+                          }`}
+                      >
+                        {getFriendlyName(cmd)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div>
               <h4 className="text-[11px] font-bold text-muted-foreground mb-1.5 uppercase flex items-center justify-between">
@@ -277,6 +355,7 @@ export default function App() {
           </div>
         </div>
       )}
+      <Toaster richColors position="top-right" theme="dark" />
     </div>
   );
 }

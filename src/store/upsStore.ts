@@ -20,6 +20,7 @@ export const useUpsStore = create<UpsState>()(
         stopType: 'Shutdown',
         delaySeconds: 15,
       },
+      supportedCommands: [],
 
       events: [],
 
@@ -87,6 +88,7 @@ export const useUpsStore = create<UpsState>()(
       setFullLoadRuntime: (minutes) => set({ fullLoadRuntime: minutes }),
       setConfig: (config) => set({ config }),
       setShutdownConfig: (shutdownConfig) => set({ shutdownConfig }),
+      setSupportedCommands: (supportedCommands) => set({ supportedCommands }),
       clearEvents: () => set({ events: [] }),
     }),
     {

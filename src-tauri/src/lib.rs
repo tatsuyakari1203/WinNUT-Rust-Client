@@ -76,7 +76,9 @@ pub fn run() {
             commands::start_background_polling,
             commands::trigger_system_stop,
             commands::scan_nut_network,
-            commands::list_ups_on_server
+            commands::list_ups_on_server,
+            commands::list_ups_commands,
+            commands::run_ups_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

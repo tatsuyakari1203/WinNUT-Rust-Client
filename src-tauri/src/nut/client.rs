@@ -112,4 +112,28 @@ impl NutClient {
         }
         Ok(names)
     }
+
+    pub async fn list_ups_commands(&mut self, ups_name: &str) -> Result<Vec<String>, NutError> {
+        let response = self.send_cmd(&format!("LIST CMD {ups_name}")).await?;
+        let mut cmds = Vec::new();
+        for line in response.lines() {
+            if line.starts_with("CMD ") {
+                // Format: CMD <ups> <command>
+                let parts: Vec<&str> = line.splitn(3, ' ').collect();
+                if parts.len() >= 3 {
+                    cmds.push(parts[2].to_string());
+                }
+            }
+        }
+        Ok(cmds)
+    }
+
+    pub async fn run_instant_cmd(&mut self, ups_name: &str, cmd: &str) -> Result<(), NutError> {
+        let resp = self.send_cmd(&format!("INSTCMD {ups_name} {cmd}")).await?;
+        if resp.trim() == "OK" {
+            Ok(())
+        } else {
+            Err(NutError::CommandFailed(resp))
+        }
+    }
 }

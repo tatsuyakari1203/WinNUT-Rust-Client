@@ -203,3 +203,36 @@ pub async fn list_ups_on_server(host: String, port: u16) -> Result<Vec<String>, 
         Err(e) => Err(format!("Failed to connect to {host}:{port}: {e}")),
     }
 }
+
+#[tauri::command]
+pub async fn list_ups_commands(
+    state: State<'_, NutState>,
+    ups_name: String,
+) -> Result<Vec<String>, String> {
+    let mut state_val = state.0.lock().await;
+    if let Some(client) = state_val.as_mut() {
+        match client.list_ups_commands(&ups_name).await {
+            Ok(cmds) => Ok(cmds),
+            Err(e) => Err(format!("Failed to list commands: {e}")),
+        }
+    } else {
+        Err("Not connected".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn run_ups_command(
+    state: State<'_, NutState>,
+    ups_name: String,
+    command: String,
+) -> Result<(), String> {
+    let mut state_val = state.0.lock().await;
+    if let Some(client) = state_val.as_mut() {
+        match client.run_instant_cmd(&ups_name, &command).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(format!("Command failed: {e}")),
+        }
+    } else {
+        Err("Not connected".to_string())
+    }
+}

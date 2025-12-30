@@ -61,6 +61,7 @@ export interface UpsState {
   fullLoadRuntime: number | null; // Minutes at 100% load
   config: NutConfig | null; // Persisted connection settings
   shutdownConfig: ShutdownConfig; // Persistence for shutdown logic
+  supportedCommands: string[]; // List of commands the UPS supports
   setUpsData: (data: UpsData) => void;
   setError: (error: string | null) => void;
   setConnected: (isConnected: boolean) => void;
@@ -68,5 +69,6 @@ export interface UpsState {
   setFullLoadRuntime: (minutes: number | null) => void;
   setConfig: (config: NutConfig | null) => void;
   setShutdownConfig: (config: ShutdownConfig) => void;
+  setSupportedCommands: (commands: string[]) => void;
   clearEvents: () => void;
 }

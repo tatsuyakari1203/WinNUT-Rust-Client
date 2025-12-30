@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { useUpsStore } from '@/store/upsStore';
 import { Settings, Server, Shield } from 'lucide-react';
 import { ShutdownType } from "../../types/ups";
+import { toast } from 'sonner';
 
 export function SettingsModal() {
-  const { config, setConfig, setConnected, ratedPower, setRatedPower, fullLoadRuntime, setFullLoadRuntime, shutdownConfig, setShutdownConfig } = useUpsStore();
+  const { config, setConfig, setConnected, ratedPower, setRatedPower, fullLoadRuntime, setFullLoadRuntime, shutdownConfig, setShutdownConfig, setSupportedCommands } = useUpsStore();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'connection' | 'shutdown'>('connection');
 
@@ -56,7 +57,7 @@ export function SettingsModal() {
       }, 1000);
     } else if (testCountdown === 0) {
       invoke('trigger_system_stop', { actionType: stopType })
-        .catch(err => alert(`Error: ${err}`));
+        .catch(err => toast.error(`Error: ${err}`));
       setTestCountdown(null);
     }
     return () => {
@@ -84,6 +85,7 @@ export function SettingsModal() {
       delaySeconds: parseInt(delaySeconds) || 15,
     });
 
+    toast.success("Settings saved successfully");
     setOpen(false);
   };
 
@@ -101,14 +103,22 @@ export function SettingsModal() {
       setConfig(newConfig);
       setConnected(true);
 
+      try {
+        const cmds = await invoke<string[]>("list_ups_commands", { upsName: newConfig.ups_name });
+        setSupportedCommands(cmds);
+      } catch (e) {
+        console.warn("Fetch commands failed:", e);
+      }
+
       await invoke("start_background_polling", {
         upsName: newConfig.ups_name,
         intervalMs: 1000
       });
 
+      toast.success(`Connected to ${newConfig.ups_name} successfully`);
       setOpen(false);
     } catch (e) {
-      alert(e);
+      toast.error(String(e));
     }
   };
 
@@ -119,9 +129,13 @@ export function SettingsModal() {
       const prefix = host.split('.').slice(0, 3).join('.') || "192.168.1";
       const ips = await invoke<string[]>("scan_nut_network", { subnetPrefix: prefix });
       setDiscoveredIps(ips);
-      if (ips.length === 0) alert("No NUT servers found in " + prefix + ".0/24");
+      if (ips.length === 0) {
+        toast.info("No NUT servers found in " + prefix + ".0/24");
+      } else {
+        toast.success(`Found ${ips.length} NUT server(s)`);
+      }
     } catch (e) {
-      alert("Scan failed: " + e);
+      toast.error("Scan failed: " + e);
     } finally {
       setIsScanning(false);
     }
@@ -136,9 +150,14 @@ export function SettingsModal() {
         port: parseInt(port) || 3493
       });
       setUpsNames(names);
-      if (names.length > 0) setUpsName(names[0]);
+      if (names.length > 0) {
+        setUpsName(names[0]);
+        toast.success(`Listed ${names.length} UPS device(s)`);
+      } else {
+        toast.info("No UPS devices found on this server");
+      }
     } catch (e) {
-      alert("Failed to fetch UPS names: " + e);
+      toast.error("Failed to fetch UPS names: " + e);
     } finally {
       setIsFetchingUps(false);
     }
