@@ -14,12 +14,12 @@ export function SettingsModal() {
   const [activeTab, setActiveTab] = useState<'connection' | 'shutdown'>('connection');
 
   // Connection State
-  const [host, setHost] = useState(config?.host || "192.168.1.105");
-  const [port, setPort] = useState(config?.port?.toString() || "3493");
-  const [username, setUsername] = useState(config?.username || "monuser");
-  const [password, setPassword] = useState(config?.password || "secret");
-  const [ratedPowerInput, setRatedPowerInput] = useState(ratedPower?.toString() || "1800");
-  const [fullLoadRuntimeInput, setFullLoadRuntimeInput] = useState(fullLoadRuntime?.toString() || "30");
+  const [host, setHost] = useState(config?.host || "");
+  const [port, setPort] = useState(config?.port?.toString() || "");
+  const [username, setUsername] = useState(config?.username || "");
+  const [password, setPassword] = useState(config?.password || "");
+  const [ratedPowerInput, setRatedPowerInput] = useState(ratedPower?.toString() || "");
+  const [fullLoadRuntimeInput, setFullLoadRuntimeInput] = useState(fullLoadRuntime?.toString() || "");
 
   // Shutdown State
   const [shutdownEnabled, setShutdownEnabled] = useState(shutdownConfig.enabled);
@@ -146,31 +146,31 @@ export function SettingsModal() {
               <div className="grid gap-5">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="host" className="text-right text-[11px] font-bold text-muted-foreground uppercase">Host</Label>
-                  <Input id="host" value={host} onChange={(e) => setHost(e.target.value)} className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
+                  <Input id="host" value={host} onChange={(e) => setHost(e.target.value)} placeholder="e.g. 192.168.1.10" className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="port" className="text-right text-[11px] font-bold text-muted-foreground uppercase">Port</Label>
-                  <Input id="port" value={port} onChange={(e) => setPort(e.target.value)} className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
+                  <Input id="port" value={port} onChange={(e) => setPort(e.target.value)} placeholder="3493" className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="username" className="text-right text-[11px] font-bold text-muted-foreground uppercase">User</Label>
-                  <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
+                  <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="monuser" className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="password" className="text-right text-[11px] font-bold text-muted-foreground uppercase">Pass</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
+                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="col-span-3 h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="rated" className="text-right text-[11px] font-bold text-muted-foreground uppercase">Power</Label>
                   <div className="col-span-3 flex items-center gap-2">
-                    <Input id="rated" value={ratedPowerInput} onChange={(e) => setRatedPowerInput(e.target.value)} className="h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
+                    <Input id="rated" value={ratedPowerInput} onChange={(e) => setRatedPowerInput(e.target.value)} placeholder="e.g. 1500" className="h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
                     <span className="text-[10px] text-muted-foreground font-bold italic">W</span>
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="runtime" className="text-right text-[11px] font-bold text-muted-foreground uppercase">Runtime</Label>
                   <div className="col-span-3 flex items-center gap-2">
-                    <Input id="runtime" value={fullLoadRuntimeInput} onChange={(e) => setFullLoadRuntimeInput(e.target.value)} className="h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
+                    <Input id="runtime" value={fullLoadRuntimeInput} onChange={(e) => setFullLoadRuntimeInput(e.target.value)} placeholder="e.g. 10" className="h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
                     <span className="text-[10px] text-muted-foreground font-bold italic">MIN</span>
                   </div>
                 </div>

@@ -10,8 +10,8 @@ export const useUpsStore = create<UpsState>()(
       isConnected: false,
       lastUpdated: null,
       error: null,
-      ratedPower: 1800, // Default for 3000VA
-      fullLoadRuntime: 30, // Default to match WinNut optimism
+      ratedPower: 0,
+      fullLoadRuntime: 0,
       config: null,
       shutdownConfig: {
         enabled: false,
