@@ -12,7 +12,31 @@ on:
       - 'v*'
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag: ${{ steps.tag_version.outputs.new_tag }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: anothrNick/github-tag-action@1.64.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: patch
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          echo "changelog=$(git log --pretty=format:'- %s' ${{ steps.tag_version.outputs.old_tag }}..${{ steps.tag_version.outputs.new_tag }} | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
   publish:
+    needs: prepare
     permissions:
       contents: write
     strategy:
@@ -24,8 +48,6 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Required for tagging
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -43,28 +65,15 @@ jobs:
       - name: install dependencies
         run: bun install
 
-      - name: Bump version and push tag
-        id: tag_version
-        uses: anothrNick/github-tag-action@1.64.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
-          DEFAULT_BUMP: patch
-
-      - name: Generate Changelog
-        id: changelog
-        run: |
-          echo "changelog=$(git log --pretty=format:'- %s' $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ steps.tag_version.outputs.new_tag }}
-          releaseName: "WinNUT Rust Client ${{ steps.tag_version.outputs.new_tag }}"
+          tagName: ${{ needs.prepare.outputs.new_tag }}
+          releaseName: "WinNUT Rust Client ${{ needs.prepare.outputs.new_tag }}"
           releaseBody: |
             ### 📝 What's Changed
-            ${{ steps.changelog.outputs.changelog }}
+            ${{ needs.prepare.outputs.changelog }}
 
             *Automated release by GitHub Actions.*
           releaseDraft: false
