@@ -1,7 +1,7 @@
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use ups_client_lib::nut::{client::NutClient, models::NutConfig};
+// use ups_client_lib::nut::{client::NutClient, models::NutConfig};
 
 // We'll reimplement a simple client here to have full control over reading for debugging
 struct DebugClient {
@@ -10,13 +10,13 @@ struct DebugClient {
 
 impl DebugClient {
     async fn connect(host: &str, port: u16) -> Result<Self, Box<dyn std::error::Error>> {
-        let addr = format!("{}:{}", host, port);
+        let addr = format!("{host}:{port}");
         let stream = TcpStream::connect(&addr).await?;
         Ok(Self { stream })
     }
 
     async fn send_cmd(&mut self, cmd: &str) -> Result<String, Box<dyn std::error::Error>> {
-        let cmd_with_newline = format!("{}\n", cmd);
+        let cmd_with_newline = format!("{cmd}\n");
         self.stream.write_all(cmd_with_newline.as_bytes()).await?;
 
         // Read with a timeout loop
@@ -63,12 +63,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // List UPS
     println!("\n--- LIST UPS ---");
     let ups_list = client.send_cmd("LIST UPS").await?;
-    println!("{}", ups_list);
+    println!("{ups_list}");
 
     // List Vars
     println!("\n--- LIST VAR ups ---");
     let vars = client.send_cmd("LIST VAR ups").await?;
-    println!("{}", vars);
+    println!("{vars}");
 
     Ok(())
 }

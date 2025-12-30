@@ -21,11 +21,13 @@ import { PowerStatus } from './components/dashboard/PowerStatus';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { useShutdownMonitor } from './hooks/useShutdownMonitor';
 import { useUpsData } from './hooks/useUpsData';
+import { useNotifications } from './hooks/useNotifications';
 
 const appWindow = getCurrentWindow();
 
 export default function App() {
   useUpsData();
+  useNotifications();
   const { data, history, setConnected, config, shutdownConfig, events } = useUpsStore();
   const { countdown } = useShutdownMonitor();
 

@@ -35,9 +35,9 @@ impl NutClient {
         self.stream = Some(stream);
 
         if let Some(username) = &self.config.username {
-            self.send_cmd(&format!("USERNAME {}", username)).await?;
+            self.send_cmd(&format!("USERNAME {username}")).await?;
             if let Some(password) = &self.config.password {
-                self.send_cmd(&format!("PASSWORD {}", password)).await?;
+                self.send_cmd(&format!("PASSWORD {password}")).await?;
             }
         }
 
@@ -58,7 +58,7 @@ impl NutClient {
         }
 
         let stream = self.stream.as_mut().unwrap();
-        let cmd_with_newline = format!("{}\n", cmd);
+        let cmd_with_newline = format!("{cmd}\n");
         stream.write_all(cmd_with_newline.as_bytes()).await?;
 
         // Improved reading logic with timeout and loop
@@ -93,7 +93,7 @@ impl NutClient {
         &mut self,
         ups_name: &str,
     ) -> Result<super::models::UpsData, NutError> {
-        let cmd = format!("LIST VAR {}", ups_name);
+        let cmd = format!("LIST VAR {ups_name}");
         let response = self.send_cmd(&cmd).await?;
         Ok(super::parser::parse_list_vars(&response))
     }

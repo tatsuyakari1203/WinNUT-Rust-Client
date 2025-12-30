@@ -16,7 +16,7 @@ pub async fn connect_nut(state: State<'_, NutState>, config: NutConfig) -> Resul
             *state_val = Some(client);
             Ok("Connected".to_string())
         }
-        Err(e) => Err(format!("Connection failed: {}", e)),
+        Err(e) => Err(format!("Connection failed: {e}")),
     }
 }
 
@@ -35,7 +35,7 @@ pub async fn get_ups_data(state: State<'_, NutState>, ups_name: String) -> Resul
     if let Some(client) = state_val.as_mut() {
         match client.get_ups_data(&ups_name).await {
             Ok(data) => Ok(data),
-            Err(e) => Err(format!("Failed to get data: {}", e)),
+            Err(e) => Err(format!("Failed to get data: {e}")),
         }
     } else {
         Err("Not connected".to_string())
@@ -72,7 +72,7 @@ pub async fn start_background_polling(
             match data_result {
                 Ok(data) => {
                     if let Err(e) = app.emit("ups-update", &data) {
-                        eprintln!("Failed to emit ups-update: {}", e);
+                        eprintln!("Failed to emit ups-update: {e}");
                     }
                 }
                 Err(_e) => {
@@ -93,7 +93,7 @@ pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
         let mut cmd = match action_type.as_str() {
             "Shutdown" => {
                 let mut c = Command::new("shutdown");
-                c.args(&["/s", "/t", "0", "/f"]);
+                c.args(["/s", "/t", "0", "/f"]);
                 c
             }
             "Hibernate" => {
@@ -103,7 +103,7 @@ pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
             }
             "Sleep" => {
                 let mut c = Command::new("rundll32.exe");
-                c.args(&["powrprof.dll,SetSuspendState", "0,1,0"]);
+                c.args(["powrprof.dll,SetSuspendState", "0,1,0"]);
                 c
             }
             _ => return Err("Invalid action type".to_string()),
@@ -111,7 +111,7 @@ pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
 
         match cmd.spawn() {
             Ok(_) => Ok(()),
-            Err(e) => Err(format!("Failed to execute command: {}", e)),
+            Err(e) => Err(format!("Failed to execute command: {e}")),
         }
     }
 

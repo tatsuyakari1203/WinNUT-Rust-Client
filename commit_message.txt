@@ -1,0 +1,12 @@
+feat: finalize WinNUT Rust Client with automation and notifications
+
+Phase 4 & Refinement Completion:
+- Implement conditional system stop (Shutdown, Hibernate, Sleep) with user-defined thresholds.
+- Add high-urgency countdown overlay for imminent system actions.
+- Implement Event Log system to track UPS status transitions with timestamps.
+- Integrate Windows System Notifications for real-time status alerts.
+- Rebrand application to "WinNUT Rust Client" for a professional native feel.
+- Add "Automation" info & live countdown to the System Information sidebar.
+- Complete linting pass: resolved all clippy warnings (uninlined args, borrows) and TSC type checks.
+- Clean up unused imports, components, and dead code across the project.
+- Fixed critical data-flow bug by restoring useUpsData hook.

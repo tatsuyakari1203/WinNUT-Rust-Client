@@ -3,7 +3,7 @@ mod commands;
 pub mod nut;
 #[tauri::command]
 fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+    format!("Hello, {name}! You've been greeted from Rust!")
 }
 
 use commands::NutState;
@@ -14,6 +14,7 @@ use tokio::sync::Mutex;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(NutState(Arc::new(Mutex::new(None))))
         .invoke_handler(tauri::generate_handler![
             greet,
