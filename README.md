@@ -4,6 +4,10 @@ A premium, ultra-compact, and high-performance desktop utility for monitoring UP
 
 ![WinNUT Rust Client](src-tauri/icons/icon.png)
 
+## 📸 Preview
+
+![Application Preview](src-tauri/icons/preview.png)
+
 ## 🚀 Features
 
 - **Minimalist Premium UI**: A high-density, glassmorphic 3-panel dashboard designed for continuous monitoring without clutter.
