@@ -17,6 +17,8 @@ jobs:
     outputs:
       new_tag: ${{ steps.tag_version.outputs.new_tag }}
       changelog: ${{ steps.changelog.outputs.changelog }}
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
