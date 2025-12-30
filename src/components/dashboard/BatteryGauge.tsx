@@ -43,7 +43,7 @@ export function BatteryGauge({ percentage = 0, status, voltage, runtime }: Batte
             <Battery className={`h-12 w-12 ${statusColor}`} />
           )}
         </div>
-        <div className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 leading-none">
+        <div className="text-3xl font-bold tracking-tight text-foreground leading-none">
           {percentage}%
         </div>
         <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
@@ -51,20 +51,20 @@ export function BatteryGauge({ percentage = 0, status, voltage, runtime }: Batte
         </div>
       </div>
 
-      <Progress value={percentage} className={`h-1 w-full ${colorClass} bg-zinc-100 dark:bg-zinc-800 mb-4`} />
+      <Progress value={percentage} className={`h-1 w-full ${colorClass} bg-muted mb-4`} />
 
-      <div className="w-full grid grid-cols-2 gap-4 pt-2 border-t border-zinc-50 dark:border-zinc-800/50">
+      <div className="w-full grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
         <div className="flex flex-col">
           <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Voltage</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{voltage || "--"}</span>
+            <span className="text-sm font-bold text-foreground">{voltage || "--"}</span>
             <span className="text-[10px] text-muted-foreground">V</span>
           </div>
         </div>
-        <div className="flex flex-col border-l border-zinc-50 dark:border-zinc-800/50 pl-4">
+        <div className="flex flex-col border-l border-border/50 pl-4">
           <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Remaining</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-sm font-bold text-zinc-900 dark:text-zinc-50 font-mono tracking-tight">{formatRuntime(runtime)}</span>
+            <span className="text-sm font-bold text-foreground font-mono tracking-tight">{formatRuntime(runtime)}</span>
           </div>
         </div>
       </div>

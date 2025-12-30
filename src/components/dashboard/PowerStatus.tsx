@@ -13,17 +13,17 @@ export function PowerStatus({ status }: PowerStatusProps) {
   const Indicator = ({ active, label, colorClass, icon: Icon }: { active: boolean; label: string; colorClass: string; icon: any }) => (
     <div className={`flex items-center justify-between py-1.5 ${active ? 'opacity-100' : 'opacity-30 grayscale'}`}>
       <div className="flex items-center gap-2">
-        <Icon className={`h-3 w-3 ${active ? colorClass : 'text-zinc-400'}`} />
-        <span className={`text-[11px] font-medium ${active ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500'}`}>{label}</span>
+        <Icon className={`h-3 w-3 ${active ? colorClass : 'text-zinc-500'}`} />
+        <span className={`text-[11px] font-medium ${active ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
       </div>
-      <div className={`h-1.5 w-1.5 rounded-full ${active ? colorClass.replace('text-', 'bg-') : 'bg-zinc-200 dark:bg-zinc-700'}`}></div>
+      <div className={`h-1.5 w-1.5 rounded-full ${active ? colorClass.replace('text-', 'bg-') : 'bg-muted'}`}></div>
     </div>
   );
 
   return (
     <div className="flex flex-col">
       <h3 className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase mb-1">State</h3>
-      <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+      <div className="divide-y divide-border/50">
         <Indicator
           active={isOnline}
           label="Online"

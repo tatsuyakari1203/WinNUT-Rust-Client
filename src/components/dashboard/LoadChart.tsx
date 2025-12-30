@@ -9,10 +9,10 @@ export function LoadChart({ data }: LoadChartProps) {
     <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
           <XAxis
             dataKey="time"
-            stroke="#888888"
+            stroke="#71717a"
             fontSize={10}
             tickLine={false}
             axisLine={false}
@@ -20,7 +20,7 @@ export function LoadChart({ data }: LoadChartProps) {
           />
           <YAxis
             yAxisId="left"
-            stroke="#888888"
+            stroke="#71717a"
             fontSize={10}
             tickLine={false}
             axisLine={false}
@@ -29,15 +29,20 @@ export function LoadChart({ data }: LoadChartProps) {
           <YAxis
             yAxisId="right"
             orientation="right"
-            stroke="#888888"
+            stroke="#71717a"
             fontSize={10}
             tickLine={false}
             axisLine={false}
             tickFormatter={(value) => `${value}W`}
           />
           <Tooltip
-            contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-            labelStyle={{ color: "#666" }}
+            contentStyle={{
+              backgroundColor: "#09090b",
+              borderRadius: "4px",
+              border: "1px solid #27272a",
+              fontSize: "11px"
+            }}
+            itemStyle={{ fontSize: "11px" }}
           />
           <Line
             yAxisId="left"

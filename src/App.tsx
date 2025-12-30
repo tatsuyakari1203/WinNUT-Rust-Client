@@ -52,11 +52,11 @@ function App() {
   };
 
   return (
-    <div className="h-screen bg-white dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 select-none overflow-hidden flex flex-col border border-zinc-100 dark:border-zinc-800 rounded-[2px]">
+    <div className="h-screen bg-background font-sans text-foreground select-none overflow-hidden flex flex-col border border-border rounded-[2px]">
       {/* Header - Ultra Flush */}
       <header
         onMouseDown={handleDrag}
-        className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-100 dark:border-zinc-800 shrink-0 cursor-default select-none group/header"
+        className="flex items-center justify-between px-3 py-1.5 border-b border-border shrink-0 cursor-default select-none group/header"
       >
         <div className="flex items-center gap-2 pointer-events-none">
           <Zap className="h-3.5 w-3.5 text-yellow-500" />
@@ -73,27 +73,27 @@ function App() {
           </div>
 
           {/* Window Controls */}
-          <div className="flex items-center ml-2 border-l border-zinc-100 dark:border-zinc-800 pl-2 gap-1 no-drag">
+          <div className="flex items-center ml-2 border-l border-border pl-2 gap-1 no-drag">
             <button
               onClick={() => appWindow.minimize()}
-              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+              className="p-1.5 hover:bg-muted rounded transition-colors"
               title="Minimize"
             >
-              <Minus className="h-3 w-3 text-zinc-400" />
+              <Minus className="h-3 w-3 text-muted-foreground" />
             </button>
             <button
               onClick={() => appWindow.close()}
-              className="p-1.5 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 rounded transition-colors group"
+              className="p-1.5 hover:bg-destructive hover:text-white rounded transition-colors group"
               title="Close"
             >
-              <X className="h-3 w-3 text-zinc-400 group-hover:text-white" />
+              <X className="h-3 w-3 text-muted-foreground group-hover:text-white" />
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Content - Tight 3 Columns */}
-      <main className="flex-1 flex min-h-0 divide-x divide-zinc-100 dark:divide-zinc-800/50">
+      <main className="flex-1 flex min-h-0 divide-x divide-border/50">
 
         {/* LEFT: Battery (20%) */}
         <section className="w-[20%] p-4 flex flex-col gap-6 shrink-0 h-full overflow-y-auto">
@@ -118,8 +118,8 @@ function App() {
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Activity className="h-3 w-3 text-muted-foreground" />
-                <h3 className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Usage Trend</h3>
+                <Activity className="h-3 w-3 text-zinc-500" />
+                <h3 className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Usage Trend</h3>
               </div>
               <span className="text-[9px] font-bold text-green-500">LIVE</span>
             </div>
@@ -130,36 +130,36 @@ function App() {
         </section>
 
         {/* RIGHT: Detailed Info (30%) */}
-        <section className="w-[30%] p-4 flex flex-col gap-4 shrink-0 h-full overflow-y-auto bg-zinc-50/30 dark:bg-zinc-900/10">
-          <h3 className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase border-b border-zinc-100 dark:border-zinc-800 pb-1 mb-1">System Information</h3>
+        <section className="w-[30%] p-4 flex flex-col gap-4 shrink-0 h-full overflow-y-auto bg-muted/20">
+          <h3 className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase border-b border-border pb-1 mb-1">System Information</h3>
 
           <div className="space-y-4">
             <div>
-              <h4 className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 mb-1.5 uppercase">Identity</h4>
+              <h4 className="text-[11px] font-bold text-muted-foreground mb-1.5 uppercase">Identity</h4>
               <dl className="space-y-1 text-[11px]">
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Manufacturer</dt><dd className="font-medium text-right truncate">{data?.ups_mfr || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Model</dt><dd className="font-medium text-right truncate">{data?.ups_model || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Serial</dt><dd className="font-medium text-right truncate">{data?.ups_serial || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Firmware</dt><dd className="font-medium text-right truncate">{data?.ups_firmware || "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Manufacturer</dt><dd className="font-medium text-right truncate">{data?.ups_mfr || "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Model</dt><dd className="font-medium text-right truncate">{data?.ups_model || "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Serial</dt><dd className="font-medium text-right truncate">{data?.ups_serial || "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Firmware</dt><dd className="font-medium text-right truncate">{data?.ups_firmware || "--"}</dd></div>
               </dl>
             </div>
 
             <div>
-              <h4 className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 mb-1.5 uppercase">Capability</h4>
+              <h4 className="text-[11px] font-bold text-muted-foreground mb-1.5 uppercase">Capability</h4>
               <dl className="space-y-1 text-[11px]">
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Type</dt><dd className="font-medium">{data?.ups_type || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Nom. Power</dt><dd className="font-medium">{data?.ups_realpower_nominal ? `${data.ups_realpower_nominal}W` : "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Nom. Volt</dt><dd className="font-medium">{data?.output_voltage_nominal || "--"}V</dd></div>
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Nom. Freq</dt><dd className="font-medium">{data?.output_frequency_nominal || "--"}Hz</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Type</dt><dd className="font-medium">{data?.ups_type || "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Nom. Power</dt><dd className="font-medium">{data?.ups_realpower_nominal ? `${data.ups_realpower_nominal}W` : "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Nom. Volt</dt><dd className="font-medium">{data?.output_voltage_nominal || "--"}V</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Nom. Freq</dt><dd className="font-medium">{data?.output_frequency_nominal || "--"}Hz</dd></div>
               </dl>
             </div>
 
             <div>
-              <h4 className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 mb-1.5 uppercase">Service</h4>
+              <h4 className="text-[11px] font-bold text-muted-foreground mb-1.5 uppercase">Service</h4>
               <dl className="space-y-1 text-[11px]">
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Driver</dt><dd className="font-medium">{data?.driver_name || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Version</dt><dd className="font-medium">{data?.driver_version || "--"}</dd></div>
-                <div className="flex justify-between gap-2 border-b border-zinc-50 dark:border-zinc-800 pb-0.5"><dt className="text-muted-foreground">Beeper</dt><dd className="font-medium capitalize">{data?.ups_beeper_status || "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Driver</dt><dd className="font-medium">{data?.driver_name || "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Version</dt><dd className="font-medium">{data?.driver_version || "--"}</dd></div>
+                <div className="flex justify-between gap-2 border-b border-border pb-0.5"><dt className="text-muted-foreground">Beeper</dt><dd className="font-medium capitalize">{data?.ups_beeper_status || "--"}</dd></div>
               </dl>
             </div>
           </div>

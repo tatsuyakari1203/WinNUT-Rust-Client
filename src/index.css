@@ -30,31 +30,38 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem
   }
+
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
+    --background: 240 6% 10%;
+    /* Soft Charcoal #18181b */
+    --foreground: 240 5% 80%;
+    /* Muted Gray #ccced2 */
+    --card: 240 6% 12%;
+    /* Slightly lighter for surfaces */
+    --card-foreground: 240 5% 85%;
+    --popover: 240 6% 12%;
+    --popover-foreground: 240 5% 85%;
+    --primary: 240 5% 90%;
+    --primary-foreground: 240 6% 10%;
+    --secondary: 240 4% 18%;
+    /* For buttons/secondary items */
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 4% 60%;
+    --accent: 240 4% 18%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 40.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    --border: 240 4% 20%;
+    /* Soft border #323235 */
+    --input: 240 4% 20%;
+    --ring: 240 4% 70%;
+    --chart-1: 220 70% 60%;
+    /* Brighten chart colors slightly for depth */
+    --chart-2: 160 60% 55%;
+    --chart-3: 30 80% 65%;
+    --chart-4: 280 65% 70%;
+    --chart-5: 340 75% 65%
   }
 }
 
@@ -62,6 +69,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
