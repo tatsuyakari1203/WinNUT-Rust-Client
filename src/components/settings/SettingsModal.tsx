@@ -51,18 +51,43 @@ export function SettingsModal() {
 
   useEffect(() => {
     let timer: number | null = null;
-    if (testCountdown !== null && testCountdown > 0) {
+
+    // For non-Shutdown types (Hibernate/Sleep) or if we want manual countdown
+    if (stopType !== 'Shutdown' && testCountdown !== null && testCountdown > 0) {
       timer = window.setInterval(() => {
         setTestCountdown(prev => (prev !== null ? prev - 1 : null));
       }, 1000);
-    } else if (testCountdown === 0) {
-      invoke('trigger_system_stop', { actionType: stopType })
+    } else if (testCountdown === 0 && stopType !== 'Shutdown') {
+      // Hibernate/Sleep trigger at 0
+      invoke('trigger_system_stop', { actionType: stopType, delaySec: 0 })
         .catch(err => toast.error(`Error: ${err}`));
       setTestCountdown(null);
     }
+
     return () => {
       if (timer) window.clearInterval(timer);
     };
+  }, [testCountdown, stopType]);
+
+  // Handle Shutdown Test Start (Native Timer)
+  useEffect(() => {
+    if (testCountdown === 15 && stopType === 'Shutdown') {
+      // Trigger native Windows shutdown with 15s delay immediately
+      invoke('trigger_system_stop', { actionType: 'Shutdown', delaySec: 15 })
+        .then(() => toast.success("System Shutdown scheduled in 15s"))
+        .catch(err => toast.error(`Error: ${err}`));
+
+      // Optimization: We don't need to block UI, but we can set countdown to null effectively
+      // or keep it to show a "Cancel" button?
+      // Let's keep a visual countdown for the cancel button utility, but not trigger again at 0.
+      const timer = window.setInterval(() => {
+        setTestCountdown(prev => {
+          if (prev === null || prev <= 0) return null;
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
   }, [testCountdown, stopType]);
 
   const handleSave = async () => {
@@ -347,9 +372,18 @@ export function SettingsModal() {
                       size="sm"
                       className="w-full h-8 text-[10px] font-bold uppercase tracking-widest bg-destructive/80 hover:bg-destructive shadow-lg shadow-destructive/20"
                       onClick={() => {
-                        if (confirm(`CAUTION: This will initiate a 15-second countdown to ${stopType}. Save all work first. Proceed?`)) {
-                          setTestCountdown(15);
-                        }
+                        toast(`Initiate ${stopType} Test?`, {
+                          description: "This will start a 15-second countdown. Save your work!",
+                          action: {
+                            label: "Proceed",
+                            onClick: () => setTestCountdown(15),
+                          },
+                          cancel: {
+                            label: "Cancel",
+                            onClick: () => console.log("Cancelled"),
+                          },
+                          duration: 8000,
+                        });
                       }}
                     >
                       Test {stopType} Now
@@ -359,7 +393,10 @@ export function SettingsModal() {
                       variant="outline"
                       size="sm"
                       className="w-full h-8 text-[10px] font-bold uppercase tracking-widest border-destructive text-destructive hover:bg-destructive hover:text-white animate-pulse"
-                      onClick={() => setTestCountdown(null)}
+                      onClick={() => {
+                        setTestCountdown(null);
+                        invoke('abort_system_stop').catch(console.error);
+                      }}
                     >
                       CANCEL TEST ({testCountdown}s)
                     </Button>

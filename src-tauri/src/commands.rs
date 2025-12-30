@@ -118,7 +118,7 @@ pub async fn start_background_polling(
 }
 
 #[tauri::command]
-pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
+pub async fn trigger_system_stop(action_type: String, delay_sec: u64) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
         use std::process::Command;
@@ -126,7 +126,8 @@ pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
         let mut cmd = match action_type.as_str() {
             "Shutdown" => {
                 let mut c = Command::new("C:\\Windows\\System32\\shutdown.exe");
-                c.args(["/s", "/t", "0", "/f"]);
+                // Use /t delay to schedule the shutdown natively
+                c.args(["/s", "/t", &delay_sec.to_string(), "/f"]);
                 c
             }
             "Hibernate" => {
@@ -151,6 +152,28 @@ pub async fn trigger_system_stop(action_type: String) -> Result<(), String> {
     #[cfg(not(target_os = "windows"))]
     {
         Err("Offline actions only supported on Windows".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn abort_system_stop() -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        // Attempt to abort any pending shutdown (works if /t > 0 was used)
+        let output = Command::new("C:\\Windows\\System32\\shutdown.exe")
+            .arg("/a")
+            .output();
+
+        match output {
+            Ok(_) => Ok(()),
+            // We ignore errors here because if no shutdown is in progress, it might return exit code 1
+            Err(e) => Err(format!("Failed to abort: {e}")),
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Ok(())
     }
 }
 

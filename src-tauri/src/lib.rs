@@ -75,6 +75,7 @@ pub fn run() {
             commands::get_ups_data,
             commands::start_background_polling,
             commands::trigger_system_stop,
+            commands::abort_system_stop,
             commands::scan_nut_network,
             commands::list_ups_on_server,
             commands::list_ups_commands,
