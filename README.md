@@ -9,10 +9,15 @@ A modern, high-performance desktop client for monitoring UPS (Uninterruptible Po
 ## ✨ Key Features
 
 - **Real-time Monitoring**: Visualize Input/Output voltage, load, battery charge, and runtime with sub-second latency.
-- **Auto Update**: Seamless background updates via GitHub Releases. The app automatically checks for newer versions, downloads, and installs them with a single click.
-- **Modern UI**: Sleek, dark-themed interface built with Shadcn/UI and TailwindCSS.
+- **Historical Data**: Track power trends over time (Voltage, Load, Battery) with interactive charts.
+  ![Historical Data](src-tauri/icons/history_preview.png)
+- **Auto Update**: Seamless background updates via GitHub Releases with progress tracking and instant alerts.
+- **Modern UI**:
+    - Full Dark Mode support with a **high-contrast white Tray Icon**.
+    - **Live Version Badge** in the header for easy verification.
+    - Built with Shadcn/UI and TailwindCSS for a premium feel.
 - **Native Integration**:
-    - **System Tray**: Quick status overview (Online/On Battery/Low Battery) directly from the taskbar.
+    - **System Tray**: Quick status overview (Online/On Battery/Low Battery).
     - **Native Shutdown**: Leverages Windows' native shutdown scheduler (`shutdown.exe`) for reliable automation.
     - **Notifications**: Toast alerts for critical power events.
 - **Network Discovery**: Automatically scans your local subnet to find active NUT servers.
