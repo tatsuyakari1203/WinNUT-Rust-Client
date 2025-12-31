@@ -22,7 +22,6 @@ export function Header({ view, setView }: HeaderProps) {
     }
   };
 
-  return (
   const [appVersion, setAppVersion] = useState<string>('');
 
   useEffect(() => {
