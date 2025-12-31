@@ -1,76 +1,90 @@
-# WinNUT Rust Client 🔋
+# WinNUT Rust Client
 
-A premium, ultra-compact, and high-performance desktop utility for monitoring UPS (Uninterruptible Power Supply) systems via the NUT (Network UPS Tools) protocol. Rebuilt from the ground up with **Rust** and **Tauri v2** for a native, lightweight, and modern Windows experience.
+![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey) ![Status](https://img.shields.io/badge/status-stable-green)
 
-![WinNUT Rust Client](src-tauri/icons/icon.png)
-
-## 📸 Preview
+A modern, high-performance desktop client for monitoring UPS (Uninterruptible Power Supply) devices via the NUT (Network UPS Tools) protocol. Built with **Tauri v2** and **React**, focusing on aesthetics, performance, and native Windows integration.
 
 ![Application Preview](src-tauri/icons/preview.png)
 
-## 🚀 Features
+## ✨ Key Features
 
-- **Minimalist Premium UI**: A high-density, glassmorphic 3-panel dashboard designed for continuous monitoring without clutter.
-- **Real-time Monitoring**: Low-latency polling of status, load, voltage, frequency, and battery metrics.
-- **Smart Tech Integration**:
-  - **Programmatic System Tray**: Dynamic status-aware tray icons (Green/Orange/Red) generated in real-time.
-  - **Close-to-Tray**: Runs silently in the background; minimize to the tray to keep your system protected.
-- **Advanced Automation**:
-  - Conditional **Shutdown**, **Hibernate**, or **Sleep** based on battery percentage or remaining runtime.
-  - **Safety First**: 15-second countdown with manual override for all automation tests.
-- **Native Notifications**: Real-time Windows desktop alerts for critical power events (Power Lost, Power Restored, Low Battery).
-- **Concise Event Log**: Chronological history of status changes with high-precision timestamps.
-- **Smart Estimation**: Automatically calculates power consumption (Watts) and battery runtime if your UPS doesn't report them.
+- **Real-time Monitoring**: Visualize Input/Output voltage, load, battery charge, and runtime with sub-second latency.
+- **Modern UI**: Sleek, dark-themed interface built with Shadcn/UI and TailwindCSS.
+- **Native Integration**:
+    - **System Tray**: Quick status overview (Online/On Battery/Low Battery) directly from the taskbar.
+    - **Native Shutdown**: Leverages Windows' native shutdown scheduler (`shutdown.exe`) for reliable automation.
+    - **Notifications**: Toast alerts for critical power events.
+- **Network Discovery**: Automatically scans your local subnet to find active NUT servers.
+- **Remote Control**: Send commands to the UPS (Test Battery, Toggle Beeper, etc.) directly from the client.
+- **Lightweight**: Written in Rust, utilizing a fraction of the memory compared to Electron alternatives.
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Rust, Tauri v2 (High-performance system integration)
-- **Frontend**: React, TypeScript, Tailwind CSS (Modern, responsive UI)
-- **State Management**: Zustand with persistent storage
-- **Icons**: Lucide React & Custom Programmatic RGBA Icons
-- **Packaging**: NSIS & MSI (Standard Windows Installers)
+- **Core**: [Tauri v2](https://v2.tauri.app/) (Rust)
+- **Frontend**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [TailwindCSS](https://tailwindcss.com/) + [Shadcn/UI](https://ui.shadcn.com/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Build Tool**: [Vite](https://vitejs.dev/) + [Bun](https://bun.sh/)
 
-## 📦 Installation
+## 🚀 Installation
 
-To use the client, download the latest release from the [Releases](https://github.com/your-repo/winnut-rust/releases) page.
+### Download Binary
+Go to the [Releases](https://github.com/tatsuyakari1203/WinNUT-Rust-Client/releases) page and download the latest `.msi` installer.
 
-1.  Download `WinNUT-Rust-Client-setup.exe`.
-2.  Run the installer.
-3.  Launch the app and enter your NUT Server details (Host, Port, User/Pass).
-
-## 🔨 Development
-
-To run or build the project locally, ensure you have [Bun](https://bun.sh/) and [Rust](https://www.rust-lang.org/) installed.
-
-### Setup
-```bash
-# Clone the repository
-git clone https://github.com/your-repo/winnut-rust.git
-cd winnut-rust
-
-# Install dependencies
-bun install
-```
-
-### Run in Development
-```bash
-bun run tauri dev
-```
-
-### Build for Production
-```bash
-bun run tauri build
-```
+### Prerequisites
+- A running **NUT (Network UPS Tools)** server (e.g., on a Raspberry Pi, Synology NAS, or Linux server).
+- **Windows 10/11** (x64).
 
 ## ⚙️ Configuration
 
-- **NUT Server**: Default port is `3493`.
-- **System Commands**: Ensure the application has appropriate permissions to execute system shutdown commands. In development, run your terminal as Administrator for testing automation.
-- **Persistence**: All settings (Connection, Thresholds, Power Specs) are saved locally and persist between launches.
+1.  **Connection**:
+    - Open Settings (Gear icon).
+    - Enter your NUT Server IP, Port (default 3493), Username, and Password.
+    - Click **"Test & Connect"**.
+2.  **Automation (Shutdown)**:
+    - Enable "Automation" in Settings.
+    - Set thresholds (e.g., Battery < 30% or Runtime < 120s).
+    - Choose Action: **Shutdown**, **Hibernate**, or **Sleep**.
+    - When triggered, a native Windows notification will appear with a 15s countdown, allowing you to save work.
+
+## 💻 Development
+
+### Prerequisites
+- [Rust](https://www.rust-lang.org/tools/install) (stable)
+- [Node.js](https://nodejs.org/) or [Bun](https://bun.sh/)
+- [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (for Windows development)
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/tatsuyakari1203/WinNUT-Rust-Client.git
+cd WinNUT-Rust-Client
+
+# Install dependencies
+bun install
+
+# Run in development mode
+bun run tauri dev
+```
+
+### Build
+
+```bash
+# Build for production (outputs .msi)
+bun run tauri build
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1.  Fork the project
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-*Built with ❤️ for the UPS community.*
+Distributed under the MIT License. See `LICENSE` for more information.
