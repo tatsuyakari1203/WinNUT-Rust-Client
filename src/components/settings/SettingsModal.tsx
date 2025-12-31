@@ -148,7 +148,14 @@ export function SettingsModal() {
 
       await invoke("start_background_polling", {
         upsName: newConfig.ups_name,
-        intervalMs: 1000
+        intervalMs: 1000,
+        shutdownConfig: {
+          enabled: shutdownEnabled,
+          batteryThreshold: parseInt(batteryThreshold) || 30,
+          runtimeThreshold: parseInt(runtimeThreshold) || 120,
+          stopType,
+          delaySeconds: parseInt(delaySeconds) || 15,
+        }
       });
 
       toast.success(`Connected to ${newConfig.ups_name} successfully`);
