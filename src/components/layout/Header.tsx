@@ -1,7 +1,9 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { getVersion } from '@tauri-apps/api/app';
 import { Zap, Minus, X } from 'lucide-react';
 import { SettingsModal } from '../settings/SettingsModal';
 import { useUpsStore } from '../../store/upsStore';
+import { useEffect, useState } from 'react';
 
 const appWindow = getCurrentWindow();
 
@@ -21,13 +23,20 @@ export function Header({ view, setView }: HeaderProps) {
   };
 
   return (
+  const [appVersion, setAppVersion] = useState<string>('');
+
+  useEffect(() => {
+    getVersion().then(setAppVersion).catch(console.error);
+  }, []);
+
+  return (
     <header
       onMouseDown={handleDrag}
       className="flex items-center justify-between px-3 py-1.5 border-b border-border shrink-0 cursor-default select-none group/header"
     >
       <div className="flex items-center gap-2 pointer-events-none">
         <Zap className="h-3.5 w-3.5 text-yellow-500" />
-        <h1 className="text-xs font-bold tracking-tight">WinNUT Rust Client <span className="text-[9px] text-muted-foreground ml-1 px-1 py-0.5 rounded bg-muted/20 border border-border/20">v0.1.1</span></h1>
+        <h1 className="text-xs font-bold tracking-tight">WinNUT Rust Client <span className="text-[9px] text-muted-foreground ml-1 px-1 py-0.5 rounded bg-muted/20 border border-border/20">v{appVersion}</span></h1>
         <div className="flex items-center gap-1.5 ml-2">
           {status === "UNKNOWN" ? (
             <span className="text-[10px] font-bold text-muted-foreground uppercase">--</span>
