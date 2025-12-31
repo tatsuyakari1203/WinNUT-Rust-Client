@@ -82,11 +82,36 @@ pub async fn start_background_polling(
         loop {
             interval.tick().await;
 
-            // Scope for lock
+            // Scope for lock with Auto-Reconnect Watchdog
             let data_result = {
                 let mut guard = state_arc.lock().await;
                 if let Some(client) = guard.as_mut() {
-                    client.get_ups_data(&ups_name).await
+                    match client.get_ups_data(&ups_name).await {
+                        Ok(data) => Ok(data),
+                        Err(e) => {
+                            // Watchdog: Connection failed (IO or other). Attempt manual reconnect.
+                            eprintln!(
+                                "Watchdog: UPS connection lost ({}), attempting reconnect...",
+                                e
+                            );
+
+                            // Try to reconnect used stored config
+                            match client.connect().await {
+                                Ok(_) => {
+                                    eprintln!(
+                                        "Watchdog: Reconnection successful. Retrying data fetch."
+                                    );
+                                    // Retry the fetch immediately
+                                    client.get_ups_data(&ups_name).await
+                                }
+                                Err(reconnect_err) => {
+                                    eprintln!("Watchdog: Reconnection failed: {}", reconnect_err);
+                                    // Return the original error (or could return reconnect_err)
+                                    Err(e)
+                                }
+                            }
+                        }
+                    }
                 } else {
                     Err(crate::nut::client::NutError::ConnectionFailed)
                 }
@@ -109,7 +134,10 @@ pub async fn start_background_polling(
                         let _ = tray.set_icon(Some(icon));
                     }
                 }
-                Err(_e) => {}
+                Err(_e) => {
+                    // Optionally emit an error event to frontend to show "Reconnecting..." state
+                    // For now, we just let the frontend keep the old data or handle timeout
+                }
             }
         }
     });
