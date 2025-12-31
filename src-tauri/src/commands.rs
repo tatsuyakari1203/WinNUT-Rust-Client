@@ -4,9 +4,20 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::Mutex;
 
+use log::{error, info, warn};
+
 // We need a thread-safe wrapper for the client
 pub struct NutState(pub Arc<Mutex<Option<NutClient>>>);
 pub struct DbState(pub Arc<Mutex<Option<crate::db::NutDB>>>);
+
+#[derive(Default)]
+pub struct ShutdownTracker {
+    pub pending: bool,
+    pub countdown_remaining: u64,
+    pub action_type: String,
+}
+
+pub struct ShutdownState(pub Arc<Mutex<ShutdownTracker>>);
 
 /// Creates a simple 32x32 solid color circle icon programmatically
 fn create_status_icon(r: u8, g: u8, b: u8) -> tauri::image::Image<'static> {
@@ -68,16 +79,36 @@ pub async fn get_ups_data(state: State<'_, NutState>, ups_name: String) -> Resul
     }
 }
 
+#[derive(serde::Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ShutdownConfig {
+    pub enabled: bool,
+    pub battery_threshold: u32,
+    pub runtime_threshold: u32,
+    pub stop_type: String,
+    #[serde(rename = "delaySeconds")]
+    pub timer_sec: u64,
+}
+
 #[tauri::command]
 pub async fn start_background_polling(
     app: AppHandle,
     state: State<'_, NutState>,
     db_state: State<'_, DbState>,
+    shutdown_state: State<'_, ShutdownState>,
     ups_name: String,
     interval_ms: u64,
+    shutdown_config: ShutdownConfig,
 ) -> Result<(), String> {
     let state_arc = state.0.clone();
     let db_arc = db_state.0.clone();
+    let shutdown_arc = shutdown_state.0.clone();
+
+    info!(
+        "Starting background polling for {} with interval {}ms",
+        ups_name, interval_ms
+    );
+    info!("Shutdown Config: {:?}", shutdown_config);
 
     // Spawn a background task
     tokio::spawn(async move {
@@ -88,45 +119,124 @@ pub async fn start_background_polling(
         loop {
             interval.tick().await;
 
-            // Scope for lock with Auto-Reconnect Watchdog
+            // Scope for lock with Auto-Reconnect Watchdog & Timeout
             let data_result = {
                 let mut guard = state_arc.lock().await;
                 if let Some(client) = guard.as_mut() {
-                    match client.get_ups_data(&ups_name).await {
-                        Ok(data) => Ok(data),
-                        Err(e) => {
-                            // Watchdog: Connection failed (IO or other). Attempt manual reconnect.
-                            eprintln!(
-                                "Watchdog: UPS connection lost ({}), attempting reconnect...",
-                                e
-                            );
-
-                            // Try to reconnect used stored config
-                            match client.connect().await {
-                                Ok(_) => {
-                                    eprintln!(
-                                        "Watchdog: Reconnection successful. Retrying data fetch."
-                                    );
-                                    // Retry the fetch immediately
-                                    client.get_ups_data(&ups_name).await
-                                }
-                                Err(reconnect_err) => {
-                                    eprintln!("Watchdog: Reconnection failed: {}", reconnect_err);
-                                    // Return the original error (or could return reconnect_err)
-                                    Err(e)
+                    // Add timeout to prevent locking for too long
+                    match tokio::time::timeout(
+                        std::time::Duration::from_secs(2),
+                        client.get_ups_data(&ups_name),
+                    )
+                    .await
+                    {
+                        Ok(inner_result) => match inner_result {
+                            Ok(data) => Ok(data),
+                            Err(e) => {
+                                warn!("Watchdog: Failed to get data: {}", e);
+                                // Attempt reconnect logic
+                                match client.connect().await {
+                                    Ok(_) => {
+                                        info!("Watchdog: Reconnected.");
+                                        // Retry once
+                                        match tokio::time::timeout(
+                                            std::time::Duration::from_secs(2),
+                                            client.get_ups_data(&ups_name),
+                                        )
+                                        .await
+                                        {
+                                            Ok(Ok(data)) => Ok(data),
+                                            _ => {
+                                                Err(format!("Fetch failed after reconnect: {}", e))
+                                            }
+                                        }
+                                    }
+                                    Err(re_err) => {
+                                        error!("Watchdog: Reconnect failed: {}", re_err);
+                                        Err(format!("Disconnected: {}", e))
+                                    }
                                 }
                             }
+                        },
+                        Err(_) => {
+                            error!("Watchdog: UPS data fetch timed out (lock held too long?)");
+                            // Force disconnect or just error out?
+                            // If we time out, the socket might be stuck.
+                            // Ideally we should drop the connection.
+                            let _ = client.disconnect().await;
+                            Err("Timeout".to_string())
                         }
                     }
                 } else {
-                    Err(crate::nut::client::NutError::ConnectionFailed)
+                    Err("Not connected".to_string())
                 }
             };
 
             match data_result {
                 Ok(data) => {
                     if let Err(e) = app.emit("ups-update", &data) {
-                        eprintln!("Failed to emit ups-update: {e}");
+                        error!("Failed to emit ups-update: {e}");
+                    }
+
+                    // --- Shutdown Logic ---
+                    // --- Shutdown Logic ---
+                    if shutdown_config.enabled {
+                        let mut sd_guard = shutdown_arc.lock().await;
+
+                        let bat_charge = data.battery_charge.unwrap_or(100.0);
+                        let bat_critical = bat_charge < shutdown_config.battery_threshold as f64;
+
+                        let runtime_val = data.battery_runtime.unwrap_or(f64::MAX);
+                        let runtime_critical =
+                            runtime_val < shutdown_config.runtime_threshold as f64;
+
+                        if bat_critical || runtime_critical {
+                            if !sd_guard.pending {
+                                info!(
+                                    "Shutdown Triggered! Battery: {}%, Runtime: {}s",
+                                    bat_charge, runtime_val
+                                );
+                                sd_guard.pending = true;
+                                sd_guard.countdown_remaining = shutdown_config.timer_sec;
+                                sd_guard.action_type = shutdown_config.stop_type.clone();
+                            }
+
+                            // Emit warning
+                            let _ = app.emit("shutdown-warning", sd_guard.countdown_remaining);
+
+                            if sd_guard.countdown_remaining == 0 {
+                                info!(
+                                    "Countdown reached 0. Executing system stop: {}",
+                                    sd_guard.action_type
+                                );
+                                // Execute
+                                let action = sd_guard.action_type.clone();
+                                tokio::spawn(async move {
+                                    if let Err(e) = trigger_system_stop(action, 0).await {
+                                        error!("CRITICAL: Failed to execute system stop: {}", e);
+                                    }
+                                });
+                                // We might want to stop polling or reset logic, but typically we just wait for death.
+                                // Resetting pending to false to avoid spamming commands?
+                                // Or leave it true?
+                                // If we don't reset, it stays at 0.
+                                // Let's set it to false so it can re-trigger if it failed?
+                                // No, better to stick at 0 or handle "executed" state.
+                                // For simplicity:
+                                sd_guard.pending = false;
+                            } else {
+                                sd_guard.countdown_remaining = sd_guard
+                                    .countdown_remaining
+                                    .saturating_sub(interval_ms / 1000);
+                            }
+                        } else {
+                            // Conditions met (Power restored or charged enough)
+                            if sd_guard.pending {
+                                info!("Power conditions restored. Shutdown cancelled.");
+                                sd_guard.pending = false;
+                                let _ = app.emit("shutdown-cancelled", ());
+                            }
+                        }
                     }
 
                     // Log to DB if 60s passed
@@ -146,7 +256,7 @@ pub async fn start_background_polling(
                                 status: data.status.clone(),
                             };
                             if let Err(e) = db.insert_entry(&entry) {
-                                eprintln!("Failed to log history: {}", e);
+                                error!("Failed to log history: {}", e);
                             } else {
                                 last_log_time = std::time::Instant::now();
                                 first_run = false;
@@ -166,8 +276,7 @@ pub async fn start_background_polling(
                     }
                 }
                 Err(_e) => {
-                    // Optionally emit an error event to frontend to show "Reconnecting..." state
-                    // For now, we just let the frontend keep the old data or handle timeout
+                    // Update frontend state ?
                 }
             }
         }
@@ -282,26 +391,25 @@ pub async fn trigger_system_stop(action_type: String, delay_sec: u64) -> Result<
 }
 
 #[tauri::command]
-pub async fn abort_system_stop() -> Result<(), String> {
+pub async fn abort_system_stop(shutdown_state: State<'_, ShutdownState>) -> Result<(), String> {
+    // Logic: Set pending = false
+    {
+        let mut guard = shutdown_state.0.lock().await;
+        if guard.pending {
+            info!("User requested shutdown abort.");
+            guard.pending = false;
+        }
+    }
+
     #[cfg(target_os = "windows")]
     {
         use windows::Win32::System::Shutdown::AbortSystemShutdownW;
 
         unsafe {
-            if AbortSystemShutdownW(None).is_err() {
-                // If no shutdown is in progress, this errors, which is fine to ignore or report
-                // But for the user interface, we might want to know.
-                // However, standard behavior is usually silent ignore if nothing to abort.
-                // Let's check the error code if strictly needed, but roughly:
-                return Err("Failed to abort shutdown (maybe none in progress?)".to_string());
-            }
+            let _ = AbortSystemShutdownW(None);
         }
-        Ok(())
     }
-    #[cfg(not(target_os = "windows"))]
-    {
-        Ok(())
-    }
+    Ok(())
 }
 
 #[tauri::command]

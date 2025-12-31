@@ -9,7 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Button } from "@/components/ui/button";
+
 import { RefreshCw, Activity, Zap } from "lucide-react";
 
 interface HistoryEntry {
@@ -67,8 +67,8 @@ export function HistoryCharts() {
               key={r}
               onClick={() => setRange(r)}
               className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${range === r
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                 }`}
             >
               {r}
