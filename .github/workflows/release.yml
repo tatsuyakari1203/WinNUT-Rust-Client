@@ -1,83 +1,51 @@
-name: "Release"
-
+name: Release
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - '.github/workflows/**'
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      new_tag: ${{ steps.tag_version.outputs.new_tag }}
-      changelog: ${{ steps.changelog.outputs.changelog }}
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Bump version and push tag
-        id: tag_version
-        uses: anothrNick/github-tag-action@1.64.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
-          DEFAULT_BUMP: patch
-
-      - name: Generate Changelog
-        id: changelog
-        run: |
-          echo "changelog=$(git log --pretty=format:'- %s' ${{ steps.tag_version.outputs.old_tag }}..${{ steps.tag_version.outputs.new_tag }} | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
-  publish:
-    needs: prepare
+  release:
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: "windows-latest"
-
+        platform: [windows-latest]
     runs-on: ${{ matrix.platform }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: install Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
-      - name: install dependencies
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
         run: bun install
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: Build the app
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ needs.prepare.outputs.new_tag }}
-          releaseName: "WinNUT Rust Client ${{ needs.prepare.outputs.new_tag }}"
-          releaseBody: |
-            ### 📝 What's Changed
-            ${{ needs.prepare.outputs.changelog }}
-
-            *Automated release by GitHub Actions.*
-          releaseDraft: false
+          tagName: ${{ github.ref_name }}
+          releaseName: 'WinNUT Client ${{ github.ref_name }}'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
