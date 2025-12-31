@@ -6,6 +6,7 @@ use tokio::sync::Mutex;
 
 // We need a thread-safe wrapper for the client
 pub struct NutState(pub Arc<Mutex<Option<NutClient>>>);
+pub struct DbState(pub Arc<Mutex<Option<crate::db::NutDB>>>);
 
 /// Creates a simple 32x32 solid color circle icon programmatically
 fn create_status_icon(r: u8, g: u8, b: u8) -> tauri::image::Image<'static> {
@@ -71,14 +72,19 @@ pub async fn get_ups_data(state: State<'_, NutState>, ups_name: String) -> Resul
 pub async fn start_background_polling(
     app: AppHandle,
     state: State<'_, NutState>,
+    db_state: State<'_, DbState>,
     ups_name: String,
     interval_ms: u64,
 ) -> Result<(), String> {
     let state_arc = state.0.clone();
+    let db_arc = db_state.0.clone();
 
     // Spawn a background task
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_millis(interval_ms));
+        let mut last_log_time = std::time::Instant::now();
+        let mut first_run = true;
+
         loop {
             interval.tick().await;
 
@@ -121,6 +127,31 @@ pub async fn start_background_polling(
                 Ok(data) => {
                     if let Err(e) = app.emit("ups-update", &data) {
                         eprintln!("Failed to emit ups-update: {e}");
+                    }
+
+                    // Log to DB if 60s passed
+                    if first_run || last_log_time.elapsed().as_secs() >= 60 {
+                        let db_guard = db_arc.lock().await;
+                        if let Some(db) = db_guard.as_ref() {
+                            let entry = crate::db::HistoryEntry {
+                                id: None,
+                                timestamp: std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap()
+                                    .as_secs(),
+                                input_voltage: data.input_voltage,
+                                output_voltage: data.output_voltage,
+                                load_percent: data.ups_load,
+                                battery_charge: data.battery_charge,
+                                status: data.status.clone(),
+                            };
+                            if let Err(e) = db.insert_entry(&entry) {
+                                eprintln!("Failed to log history: {}", e);
+                            } else {
+                                last_log_time = std::time::Instant::now();
+                                first_run = false;
+                            }
+                        }
                     }
 
                     if let Some(tray) = app.tray_by_id("main") {
@@ -368,5 +399,26 @@ pub async fn run_ups_command(
         }
     } else {
         Err("Not connected".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn get_chart_data(
+    db_state: State<'_, DbState>,
+    time_range: String,
+) -> Result<Vec<crate::db::HistoryEntry>, String> {
+    let hours = match time_range.as_str() {
+        "24h" => 24,
+        "12h" => 12,
+        "6h" => 6,
+        "1h" => 1,
+        _ => 24,
+    };
+
+    let guard = db_state.0.lock().await;
+    if let Some(db) = guard.as_ref() {
+        db.get_history(hours).map_err(|e| e.to_string())
+    } else {
+        Err("Database not initialized".to_string())
     }
 }

@@ -1,6 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod commands;
+pub mod db;
 pub mod nut;
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {name}! You've been greeted from Rust!")
@@ -21,6 +23,18 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .manage(NutState(Arc::new(Mutex::new(None))))
         .setup(|app| {
+            // Initialize Database
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
+                .expect("failed to get app data dir");
+            std::fs::create_dir_all(&app_data_dir)?;
+            let db = crate::db::NutDB::new(&app_data_dir);
+            if let Err(e) = db.init() {
+                eprintln!("Failed to init DB: {}", e);
+            }
+            app.manage(commands::DbState(Arc::new(Mutex::new(Some(db)))));
+
             let tray_menu = Menu::with_items(
                 app,
                 &[
@@ -79,7 +93,8 @@ pub fn run() {
             commands::scan_nut_network,
             commands::list_ups_on_server,
             commands::list_ups_commands,
-            commands::run_ups_command
+            commands::run_ups_command,
+            commands::get_chart_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
