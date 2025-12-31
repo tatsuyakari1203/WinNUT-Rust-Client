@@ -9,6 +9,7 @@ A modern, high-performance desktop client for monitoring UPS (Uninterruptible Po
 ## ✨ Key Features
 
 - **Real-time Monitoring**: Visualize Input/Output voltage, load, battery charge, and runtime with sub-second latency.
+- **Auto Update**: Seamless background updates via GitHub Releases. The app automatically checks for newer versions, downloads, and installs them with a single click.
 - **Modern UI**: Sleek, dark-themed interface built with Shadcn/UI and TailwindCSS.
 - **Native Integration**:
     - **System Tray**: Quick status overview (Online/On Battery/Low Battery) directly from the taskbar.
@@ -25,6 +26,7 @@ A modern, high-performance desktop client for monitoring UPS (Uninterruptible Po
 - **Styling**: [TailwindCSS](https://tailwindcss.com/) + [Shadcn/UI](https://ui.shadcn.com/)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 - **Build Tool**: [Vite](https://vitejs.dev/) + [Bun](https://bun.sh/)
+- **Auto Update**: [Tauri Plugin Updater](https://v2.tauri.app/plugin/updater/) + GitHub Releases
 
 ## 🚀 Installation
 
@@ -46,6 +48,9 @@ Go to the [Releases](https://github.com/tatsuyakari1203/WinNUT-Rust-Client/relea
     - Set thresholds (e.g., Battery < 30% or Runtime < 120s).
     - Choose Action: **Shutdown**, **Hibernate**, or **Sleep**.
     - When triggered, a native Windows notification will appear with a 15s countdown, allowing you to save work.
+3.  **Update**:
+    - Open Settings -> Update Tab.
+    - Inspect current version and check for updates.
 
 ## 💻 Development
 
@@ -68,12 +73,24 @@ bun install
 bun run tauri dev
 ```
 
-### Build
+### Build & Release
 
+To build the application manually:
 ```bash
-# Build for production (outputs .msi)
 bun run tauri build
 ```
+
+To create a new release (Bump Version -> Tag -> Push -> CI Build):
+```bash
+# Usage: bun run release <version>
+bun run release 0.1.5
+```
+This script will:
+1. Update version in `package.json` and `src-tauri/tauri.conf.json`.
+2. Commit changes.
+3. Create a git tag.
+4. Push to specific tag to trigger GitHub Actions workflow.
+
 
 ## 🤝 Contributing
 
