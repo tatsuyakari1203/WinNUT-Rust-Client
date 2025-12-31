@@ -27,7 +27,7 @@ export function Header({ view, setView }: HeaderProps) {
     >
       <div className="flex items-center gap-2 pointer-events-none">
         <Zap className="h-3.5 w-3.5 text-yellow-500" />
-        <h1 className="text-xs font-bold tracking-tight">WinNUT Rust Client</h1>
+        <h1 className="text-xs font-bold tracking-tight">WinNUT Rust Client <span className="text-[9px] text-muted-foreground ml-1 px-1 py-0.5 rounded bg-muted/20 border border-border/20">v0.1.1</span></h1>
         <div className="flex items-center gap-1.5 ml-2">
           {status === "UNKNOWN" ? (
             <span className="text-[10px] font-bold text-muted-foreground uppercase">--</span>
