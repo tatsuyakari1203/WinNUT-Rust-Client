@@ -22,6 +22,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_log::Builder::default().build())
+        .plugin(tauri_plugin_updater::Builder::default().build())
         .manage(NutState(Arc::new(Mutex::new(None))))
         .manage(commands::ShutdownState(Arc::new(Mutex::new(
             commands::ShutdownTracker::default(),

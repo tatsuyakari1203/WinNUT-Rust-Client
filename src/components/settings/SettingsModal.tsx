@@ -8,11 +8,22 @@ import { useUpsStore } from '@/store/upsStore';
 import { Settings, Server, Shield } from 'lucide-react';
 import { ShutdownType } from "../../types/ups";
 import { toast } from 'sonner';
+import { useUpdater } from '../../hooks/useUpdater';
+import { Download, RefreshCw, RotateCw } from 'lucide-react';
+import { getVersion } from '@tauri-apps/api/app';
 
 export function SettingsModal() {
   const { config, setConfig, setConnected, ratedPower, setRatedPower, fullLoadRuntime, setFullLoadRuntime, shutdownConfig, setShutdownConfig, setSupportedCommands } = useUpsStore();
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'connection' | 'shutdown'>('connection');
+  const [activeTab, setActiveTab] = useState<'connection' | 'shutdown' | 'update'>('connection');
+  const [appVersion, setAppVersion] = useState("...");
+
+  // Updater
+  const { status: updateStatus, error: updateError, progress: updateProgress, newVersion, checkUpdate, installUpdate, restartApp } = useUpdater();
+
+  useEffect(() => {
+    getVersion().then(setAppVersion);
+  }, []);
 
   // Connection State
   const [host, setHost] = useState(config?.host || "");
@@ -219,10 +230,62 @@ export function SettingsModal() {
               <Shield className="h-3.5 w-3.5" />
               Shutdown
             </button>
+            <button
+              onClick={() => setActiveTab('update')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-bold transition-all ${activeTab === 'update' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-muted'}`}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Update
+            </button>
           </div>
 
           <div className="flex-1 p-6 overflow-y-auto scrollbar-hide">
-            {activeTab === 'connection' ? (
+            {activeTab === 'update' ? (
+              <div className="space-y-6">
+                <div className="flex flex-col items-center justify-center py-6 border border-dashed border-border/50 rounded-lg bg-muted/5">
+                  <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                    <RotateCw className={`h-6 w-6 text-primary ${updateStatus === 'checking' || updateStatus === 'downloading' ? 'animate-spin' : ''}`} />
+                  </div>
+                  <h3 className="text-sm font-bold">WinNUT Client v{appVersion}</h3>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-1">
+                    {updateStatus === 'idle' && "Check for updates"}
+                    {updateStatus === 'checking' && "Checking..."}
+                    {updateStatus === 'uptodate' && "You are up to date"}
+                    {updateStatus === 'available' && `New version ${newVersion} available`}
+                    {updateStatus === 'downloading' && `Downloading... ${updateProgress}%`}
+                    {updateStatus === 'ready' && "Ready to restart"}
+                    {updateStatus === 'error' && "Update failed"}
+                  </p>
+                </div>
+
+                {updateError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-[11px] text-destructive font-bold">
+                    Error: {updateError}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2">
+                  {updateStatus === 'idle' || updateStatus === 'uptodate' || updateStatus === 'error' ? (
+                    <Button onClick={checkUpdate} className="w-full text-xs font-bold uppercase tracking-widest h-9">
+                      Check for Updates
+                    </Button>
+                  ) : null}
+
+                  {updateStatus === 'available' && (
+                    <Button onClick={installUpdate} className="w-full text-xs font-bold uppercase tracking-widest h-9 shadow-lg shadow-primary/20">
+                      <Download className="mr-2 h-3.5 w-3.5" />
+                      Download & Install v{newVersion}
+                    </Button>
+                  )}
+
+                  {updateStatus === 'ready' && (
+                    <Button onClick={restartApp} className="w-full text-xs font-bold uppercase tracking-widest h-9 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-500/20">
+                      Restart Now
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : activeTab === 'connection' ? (
               <div className="grid gap-5">
                 <div className="grid grid-cols-4 items-start gap-4">
                   <Label htmlFor="host" className="text-right text-[11px] font-bold text-muted-foreground uppercase pt-2">Host</Label>

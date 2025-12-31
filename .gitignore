@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Security
+*.pem
+*.pem.pub
+key_input.txt
