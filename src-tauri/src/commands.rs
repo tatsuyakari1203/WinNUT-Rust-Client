@@ -117,35 +117,102 @@ pub async fn start_background_polling(
     Ok(())
 }
 
+#[cfg(target_os = "windows")]
+fn acquire_shutdown_privilege() -> Result<(), String> {
+    use windows::Win32::Foundation::{FALSE, HANDLE, LUID};
+    use windows::Win32::Security::{
+        AdjustTokenPrivileges, LookupPrivilegeValueW, LUID_AND_ATTRIBUTES, SE_PRIVILEGE_ENABLED,
+        SE_SHUTDOWN_NAME, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY,
+    };
+    use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
+
+    unsafe {
+        let mut token: HANDLE = HANDLE::default();
+        if OpenProcessToken(
+            GetCurrentProcess(),
+            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+            &mut token,
+        )
+        .is_err()
+        {
+            return Err("Failed to open process token".to_string());
+        }
+
+        let mut luid = LUID::default();
+        if LookupPrivilegeValueW(None, SE_SHUTDOWN_NAME, &mut luid).is_err() {
+            return Err("Failed to lookup privilege".to_string());
+        }
+
+        let tp = TOKEN_PRIVILEGES {
+            PrivilegeCount: 1,
+            Privileges: [LUID_AND_ATTRIBUTES {
+                Luid: luid,
+                Attributes: SE_PRIVILEGE_ENABLED,
+            }],
+        };
+
+        if AdjustTokenPrivileges(token, FALSE, Some(&tp), 0, None, None).is_err() {
+            return Err("Failed to adjust token privileges".to_string());
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn trigger_system_stop(action_type: String, delay_sec: u64) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        use std::process::Command;
-
-        let mut cmd = match action_type.as_str() {
-            "Shutdown" => {
-                let mut c = Command::new("C:\\Windows\\System32\\shutdown.exe");
-                // Use /t delay to schedule the shutdown natively
-                c.args(["/s", "/t", &delay_sec.to_string(), "/f"]);
-                c
-            }
-            "Hibernate" => {
-                let mut c = Command::new("C:\\Windows\\System32\\shutdown.exe");
-                c.arg("/h");
-                c
-            }
-            "Sleep" => {
-                let mut c = Command::new("C:\\Windows\\System32\\rundll32.exe");
-                c.args(["powrprof.dll,SetSuspendState", "0,1,0"]);
-                c
-            }
-            _ => return Err("Invalid action type".to_string()),
+        use windows::core::{HSTRING, PCWSTR};
+        use windows::Win32::Foundation::{BOOLEAN, FALSE, TRUE};
+        use windows::Win32::System::Power::SetSuspendState;
+        use windows::Win32::System::Shutdown::{
+            InitiateSystemShutdownExW, SHTDN_REASON_FLAG_PLANNED, SHTDN_REASON_MAJOR_OTHER,
+            SHTDN_REASON_MINOR_OTHER,
         };
 
-        match cmd.spawn() {
-            Ok(_) => Ok(()),
-            Err(e) => Err(format!("Failed to execute command: {e}")),
+        // Try to acquire permissions first
+        if let Err(e) = acquire_shutdown_privilege() {
+            eprintln!("Warning: Could not acquire shutdown privilege: {}", e);
+        }
+
+        match action_type.as_str() {
+            "Shutdown" => unsafe {
+                let msg = HSTRING::from("UPS Shutdown Triggered");
+                let reason =
+                    SHTDN_REASON_MAJOR_OTHER | SHTDN_REASON_MINOR_OTHER | SHTDN_REASON_FLAG_PLANNED;
+
+                // InitiateSystemShutdownExW(machine, message, timeout, force_apps, reboot, reason)
+                if InitiateSystemShutdownExW(
+                    None,
+                    PCWSTR::from_raw(msg.as_ptr()),
+                    delay_sec as u32,
+                    TRUE,  // Force apps closed
+                    FALSE, // Reboot? No, Shutdown
+                    reason,
+                )
+                .is_err()
+                {
+                    return Err("Failed to initiate system shutdown".to_string());
+                }
+                Ok(())
+            },
+            "Hibernate" => unsafe {
+                // SetSuspendState uses BOOLEAN (u8), not BOOL (i32). TRUE/FALSE are BOOL.
+                if SetSuspendState(BOOLEAN(1), BOOLEAN(0), BOOLEAN(0)).as_bool() {
+                    Ok(())
+                } else {
+                    Err("Failed to trigger Hibernate".to_string())
+                }
+            },
+            "Sleep" => unsafe {
+                // Hibernate = FALSE means Sleep
+                if SetSuspendState(BOOLEAN(0), BOOLEAN(0), BOOLEAN(0)).as_bool() {
+                    Ok(())
+                } else {
+                    Err("Failed to trigger Sleep".to_string())
+                }
+            },
+            _ => Err("Invalid action type".to_string()),
         }
     }
 
@@ -159,17 +226,18 @@ pub async fn trigger_system_stop(action_type: String, delay_sec: u64) -> Result<
 pub async fn abort_system_stop() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        use std::process::Command;
-        // Attempt to abort any pending shutdown (works if /t > 0 was used)
-        let output = Command::new("C:\\Windows\\System32\\shutdown.exe")
-            .arg("/a")
-            .output();
+        use windows::Win32::System::Shutdown::AbortSystemShutdownW;
 
-        match output {
-            Ok(_) => Ok(()),
-            // We ignore errors here because if no shutdown is in progress, it might return exit code 1
-            Err(e) => Err(format!("Failed to abort: {e}")),
+        unsafe {
+            if AbortSystemShutdownW(None).is_err() {
+                // If no shutdown is in progress, this errors, which is fine to ignore or report
+                // But for the user interface, we might want to know.
+                // However, standard behavior is usually silent ignore if nothing to abort.
+                // Let's check the error code if strictly needed, but roughly:
+                return Err("Failed to abort shutdown (maybe none in progress?)".to_string());
+            }
         }
+        Ok(())
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -179,30 +247,45 @@ pub async fn abort_system_stop() -> Result<(), String> {
 
 #[tauri::command]
 pub async fn scan_nut_network(subnet_prefix: String) -> Result<Vec<String>, String> {
-    let mut tasks = Vec::new();
+    use futures::stream::{self, StreamExt};
+    use std::time::Duration;
+    use tokio::net::TcpStream;
+
     let port = 3493;
+    // Limit concurrent scans to 20 to avoid firewall/OS resource issues
+    const CONCURRENCY_LIMIT: usize = 20;
+    const TIMEOUT_MS: u64 = 400; // Slightly increased timeout for reliability
 
-    for i in 1..=254 {
-        let ip = format!("{}.{}", subnet_prefix, i);
-        let addr = format!("{}:{}", ip, port);
+    // Create a stream of IPs from 1 to 254
+    let ips = stream::iter(1..=254).map(|i| format!("{}.{}", subnet_prefix, i));
 
-        tasks.push(tokio::spawn(async move {
-            let timeout = std::time::Duration::from_millis(300);
-            match tokio::time::timeout(timeout, tokio::net::TcpStream::connect(&addr)).await {
+    // Process the stream with bounded concurrency
+    let discovered: Vec<String> = ips
+        .map(|ip| async move {
+            let addr = format!("{}:{}", ip, port);
+            match tokio::time::timeout(Duration::from_millis(TIMEOUT_MS), TcpStream::connect(addr))
+                .await
+            {
                 Ok(Ok(_)) => Some(ip),
                 _ => None,
             }
-        }));
-    }
+        })
+        .buffer_unordered(CONCURRENCY_LIMIT)
+        .filter_map(|res| async move { res }) // Filter out Nones
+        .collect()
+        .await;
 
-    let mut discovered = Vec::new();
-    for task in tasks {
-        if let Ok(Some(ip)) = task.await {
-            discovered.push(ip);
-        }
-    }
+    // Sort IP addresses for nicer UI display (string sort is okay-ish for IPs, but numeric is better)
+    // For simplicity, we just return the vector, React can sort or we sort lexically.
+    // Let's do a simple lexical sort here.
+    let mut final_list = discovered;
+    final_list.sort_by(|a, b| {
+        let a_parts: Vec<u8> = a.split('.').filter_map(|s| s.parse().ok()).collect();
+        let b_parts: Vec<u8> = b.split('.').filter_map(|s| s.parse().ok()).collect();
+        a_parts.cmp(&b_parts)
+    });
 
-    Ok(discovered)
+    Ok(final_list)
 }
 
 #[tauri::command]

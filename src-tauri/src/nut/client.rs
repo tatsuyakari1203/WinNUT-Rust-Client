@@ -1,7 +1,7 @@
 use super::models::NutConfig;
-use std::time::Duration;
+
 use thiserror::Error;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
 
 #[derive(Error, Debug)]
@@ -18,7 +18,7 @@ pub enum NutError {
 
 pub struct NutClient {
     config: NutConfig,
-    stream: Option<TcpStream>,
+    stream: Option<BufReader<TcpStream>>,
 }
 
 impl NutClient {
@@ -32,7 +32,8 @@ impl NutClient {
     pub async fn connect(&mut self) -> Result<(), NutError> {
         let addr = format!("{}:{}", self.config.host, self.config.port);
         let stream = TcpStream::connect(&addr).await?;
-        self.stream = Some(stream);
+        // Wrap the stream in a buffered reader for efficient line-by-line reading
+        self.stream = Some(BufReader::new(stream));
 
         if let Some(username) = &self.config.username {
             self.send_cmd(&format!("USERNAME {username}")).await?;
@@ -52,39 +53,47 @@ impl NutClient {
         Ok(())
     }
 
+    /// Sends a command to the NUT server and reads the response.
+    /// This function acts intelligently based on the command content.
+    /// If the response implies a list (e.g. `BEGIN LIST`), it reads until `END LIST`.
     pub async fn send_cmd(&mut self, cmd: &str) -> Result<String, NutError> {
         if self.stream.is_none() {
             return Err(NutError::ConnectionFailed);
         }
 
-        let stream = self.stream.as_mut().unwrap();
+        let reader = self.stream.as_mut().unwrap();
         let cmd_with_newline = format!("{cmd}\n");
-        stream.write_all(cmd_with_newline.as_bytes()).await?;
+        reader.write_all(cmd_with_newline.as_bytes()).await?;
+        reader.flush().await?;
 
-        // Improved reading logic with timeout and loop
-        let mut buffer = [0; 4096];
         let mut response = String::new();
+        let mut line = String::new();
 
-        // We use a simple read loop with timeout to gather data
-        // For production, we should parse based on "END LIST" or newline boundaries for single commands
-        let timeout_duration = Duration::from_millis(500);
+        // 1. Read the first line to determine response type
+        let bytes_read = reader.read_line(&mut line).await?;
+        if bytes_read == 0 {
+            return Err(NutError::ConnectionFailed); // EOF
+        }
 
-        loop {
-            let read_future = stream.read(&mut buffer);
-            match tokio::time::timeout(timeout_duration, read_future).await {
-                Ok(Ok(0)) => break, // EOF
-                Ok(Ok(n)) => {
-                    let chunk = String::from_utf8_lossy(&buffer[..n]);
-                    response.push_str(&chunk);
-                    // simple check to break early if we see end of list or short OK response
-                    if response.trim() == "OK" || response.contains("END LIST") {
-                        break;
-                    }
+        response.push_str(&line);
+
+        // 2. Check if this is a multi-line list response
+        // NUT protocol lists start with "BEGIN LIST ..."
+        if line.starts_with("BEGIN LIST") {
+            loop {
+                line.clear();
+                let n = reader.read_line(&mut line).await?;
+                if n == 0 {
+                    break; // Unexpected EOF inside list
                 }
-                Ok(Err(e)) => return Err(NutError::Io(e)),
-                Err(_) => break, // Timeout
+                response.push_str(&line);
+                if line.starts_with("END LIST") {
+                    break;
+                }
             }
         }
+        // Note: Some errors might be multi-line in rare cases, but standard NUT is mostly single line
+        // or strictly enveloped lists. We stick to this robust envelope check.
 
         Ok(response)
     }
