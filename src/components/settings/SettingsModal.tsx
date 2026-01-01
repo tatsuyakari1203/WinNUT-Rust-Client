@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUpsStore } from '@/store/upsStore';
-import { Settings, Server, Shield, LayoutGrid } from 'lucide-react';
+import { Settings, Server, Shield, LayoutGrid, HardDrive } from 'lucide-react';
 import { ShutdownType } from "../../types/ups";
 import { toast } from 'sonner';
 import { useUpdater } from '../../hooks/useUpdater';
@@ -18,7 +18,7 @@ import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart';
 export function SettingsModal() {
   const { config, setConfig, setConnected, ratedPower, setRatedPower, fullLoadRuntime, setFullLoadRuntime, shutdownConfig, setShutdownConfig, setSupportedCommands, theme, setTheme } = useUpsStore();
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'connection' | 'shutdown' | 'update' | 'appearance'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'connection' | 'shutdown' | 'update' | 'appearance' | 'data'>('general');
   const [appVersion, setAppVersion] = useState("...");
 
   // Updater
@@ -240,6 +240,15 @@ export function SettingsModal() {
     }
   };
 
+  const handleCleanup = async () => {
+    try {
+      const deleted = await invoke<number>('clean_history_data');
+      toast.success(`Cleanup complete. Removed ${deleted} redundant entries.`);
+    } catch (e) {
+      toast.error(`Cleanup failed: ${e}`);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -291,6 +300,13 @@ export function SettingsModal() {
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Update
+            </button>
+            <button
+              onClick={() => setActiveTab('data')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-bold transition-all ${activeTab === 'data' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-muted'}`}
+            >
+              <HardDrive className="h-3.5 w-3.5" />
+              Data
             </button>
           </div>
 
@@ -516,6 +532,37 @@ export function SettingsModal() {
                   <div className="col-span-3 flex items-center gap-2">
                     <Input id="runtime" value={fullLoadRuntimeInput} onChange={(e) => setFullLoadRuntimeInput(e.target.value)} placeholder="e.g. 10" className="h-8 text-[11px] bg-muted/20 border-border/50 focus:bg-background transition-all" />
                     <span className="text-[10px] text-muted-foreground font-bold italic">MIN</span>
+                  </div>
+                </div>
+              </div>
+            ) : activeTab === 'data' ? (
+              <div className="space-y-6">
+                <div className="flex flex-col gap-4">
+                  <div className="p-4 bg-muted/10 border border-border rounded-lg space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-full">
+                        <HardDrive className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-xs font-bold uppercase">Database Optimization</h4>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          Clean up redundant historical data to reduce database size. This will:
+                          <ul className="list-disc list-inside mt-1 ml-1 opacity-80 text-[10px]">
+                            <li>Keep detailed data for the last 30 days.</li>
+                            <li>Delete "Normal" (Online) records older than 30 days.</li>
+                            <li><b>Always preserve</b> outages, errors, and significant events.</li>
+                          </ul>
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleCleanup}
+                      variant="outline"
+                      className="w-full h-8 text-[11px] font-bold uppercase tracking-widest hover:bg-destructive/10 hover:text-destructive border-dashed border-muted-foreground/30"
+                    >
+                      Process Cleanup Now
+                    </Button>
                   </div>
                 </div>
               </div>

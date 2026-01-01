@@ -8,9 +8,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Brush,
 } from "recharts";
+import { HistoryStats } from "../../types/ups";
 
-import { RefreshCw, Activity, Zap } from "lucide-react";
+import { RefreshCw, Activity, Zap, TrendingUp, AlertTriangle, Battery } from "lucide-react";
 
 interface HistoryEntry {
   timestamp: number;
@@ -23,6 +25,7 @@ interface HistoryEntry {
 
 export function HistoryCharts() {
   const [data, setData] = useState<HistoryEntry[]>([]);
+  const [stats, setStats] = useState<HistoryStats | null>(null);
   const [range, setRange] = useState<string>("24h");
   const [loading, setLoading] = useState(false);
 
@@ -41,6 +44,11 @@ export function HistoryCharts() {
         }),
       }));
       setData(formatted);
+
+      const statsResult = await invoke<HistoryStats>("get_history_stats", {
+        timeRange: range,
+      });
+      setStats(statsResult);
     } catch (err) {
       console.error("Failed to fetch history:", err);
     } finally {
@@ -58,11 +66,13 @@ export function HistoryCharts() {
       <div className="flex items-center justify-between shrink-0 mb-2">
         <div className="flex items-center gap-2">
           <h2 className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">Historical Data</h2>
-          <span className="text-[10px] text-muted-foreground/50 font-mono">({data.length} datapoints)</span>
+          <span className="text-[10px] text-muted-foreground/50 font-mono">
+            ({stats?.data_points || 0} pts)
+          </span>
         </div>
 
         <div className="flex items-center gap-1.5 bg-muted/10 p-1 rounded-lg border border-border/10">
-          {["1h", "6h", "12h", "24h"].map((r) => (
+          {["1h", "6h", "24h", "7d", "30d", "1y"].map((r) => (
             <button
               key={r}
               onClick={() => setRange(r)}
@@ -86,6 +96,72 @@ export function HistoryCharts() {
         </div>
       </div>
 
+      {/* Stats Grid */}
+      {stats && (
+        <div className="grid grid-cols-4 gap-3 shrink-0 mb-2">
+          {/* Voltage Stats */}
+          <div className="bg-muted/5 border border-border/5 rounded p-2 flex flex-col justify-between">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Zap className="h-3 w-3 text-blue-400" />
+              <span className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider">Avg Input</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-mono font-bold text-foreground">{stats.avg_input_voltage.toFixed(1)}</span>
+              <span className="text-[10px] text-muted-foreground">V</span>
+            </div>
+            <div className="flex items-center justify-between mt-1 text-[9px] text-muted-foreground/70 font-mono">
+              <span>L: {stats.min_input_voltage.toFixed(0)}</span>
+              <span>H: {stats.max_input_voltage.toFixed(0)}</span>
+            </div>
+          </div>
+
+          {/* Load Stats */}
+          <div className="bg-muted/5 border border-border/5 rounded p-2 flex flex-col justify-between">
+            <div className="flex items-center gap-1.5 mb-1">
+              <TrendingUp className="h-3 w-3 text-orange-400" />
+              <span className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider">Max Load</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-mono font-bold text-foreground">{stats.max_load.toFixed(0)}</span>
+              <span className="text-[10px] text-muted-foreground">%</span>
+            </div>
+            <div className="flex items-center mt-1 text-[9px] text-muted-foreground/70 font-mono">
+              <span>Avg: {stats.avg_load.toFixed(1)}%</span>
+            </div>
+          </div>
+
+          {/* Battery Stats */}
+          <div className="bg-muted/5 border border-border/5 rounded p-2 flex flex-col justify-between">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Battery className="h-3 w-3 text-emerald-400" />
+              <span className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider">Min Batt</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-mono font-bold text-foreground">{stats.min_battery.toFixed(0)}</span>
+              <span className="text-[10px] text-muted-foreground">%</span>
+            </div>
+            <div className="flex items-center mt-1 text-[9px] text-muted-foreground/70 font-mono">
+              <span>Avg: {stats.avg_battery.toFixed(1)}%</span>
+            </div>
+          </div>
+
+          {/* Outage Stats */}
+          <div className="bg-muted/5 border border-border/5 rounded p-2 flex flex-col justify-between">
+            <div className="flex items-center gap-1.5 mb-1">
+              <AlertTriangle className={`h-3 w-3 ${stats.outages > 0 ? "text-red-500 animate-pulse" : "text-muted-foreground"}`} />
+              <span className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider">Outages</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className={`text-lg font-mono font-bold ${stats.outages > 0 ? "text-red-500" : "text-emerald-500"}`}>{stats.outages}</span>
+              <span className="text-[10px] text-muted-foreground">EVENTS</span>
+            </div>
+            <div className="flex items-center mt-1 text-[9px] text-muted-foreground/70 font-mono">
+              <span>In last {range}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 grid grid-rows-2 gap-4 min-h-0">
         {/* Voltage Chart Container */}
         <div className="flex flex-col min-h-0 bg-muted/5 rounded-lg p-3 border border-border/5 hover:border-border/10 transition-colors">
@@ -106,7 +182,7 @@ export function HistoryCharts() {
 
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }} syncId="historySync">
                 <defs>
                   <linearGradient id="colorInput" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
@@ -191,7 +267,7 @@ export function HistoryCharts() {
 
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }} syncId="historySync">
                 <defs>
                   <linearGradient id="colorLoad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#f97316" stopOpacity={0.2} />
@@ -250,6 +326,14 @@ export function HistoryCharts() {
                   fill="url(#colorBatt)"
                   activeDot={{ r: 4, strokeWidth: 0 }}
                   isAnimationActive={false}
+                />
+                <Brush
+                  dataKey="timeStr"
+                  height={20}
+                  stroke="#8884d8"
+                  tickFormatter={() => ""}
+                  alwaysShowText={false}
+                  fill="rgba(255, 255, 255, 0.05)"
                 />
               </AreaChart>
             </ResponsiveContainer>

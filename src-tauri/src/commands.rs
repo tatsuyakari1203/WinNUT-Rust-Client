@@ -114,6 +114,7 @@ pub async fn start_background_polling(
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_millis(interval_ms));
         let mut last_log_time = std::time::Instant::now();
+        let mut last_logged_data: Option<UpsData> = None;
         let mut first_run = true;
 
         loop {
@@ -179,7 +180,6 @@ pub async fn start_background_polling(
                     }
 
                     // --- Shutdown Logic ---
-                    // --- Shutdown Logic ---
                     if shutdown_config.enabled {
                         let mut sd_guard = shutdown_arc.lock().await;
 
@@ -216,13 +216,6 @@ pub async fn start_background_polling(
                                         error!("CRITICAL: Failed to execute system stop: {}", e);
                                     }
                                 });
-                                // We might want to stop polling or reset logic, but typically we just wait for death.
-                                // Resetting pending to false to avoid spamming commands?
-                                // Or leave it true?
-                                // If we don't reset, it stays at 0.
-                                // Let's set it to false so it can re-trigger if it failed?
-                                // No, better to stick at 0 or handle "executed" state.
-                                // For simplicity:
                                 sd_guard.pending = false;
                             } else {
                                 sd_guard.countdown_remaining = sd_guard
@@ -239,8 +232,56 @@ pub async fn start_background_polling(
                         }
                     }
 
-                    // Log to DB if 60s passed
-                    if first_run || last_log_time.elapsed().as_secs() >= 60 {
+                    // Log to DB Logic
+                    // "The Digital Observer" Strategy:
+                    // 1. Status Change: Log always.
+                    // 2. Volatility Velocity: Log if input voltage changes fast (> 0.5V/s).
+                    // 3. Load/Battery: Log if change > 5% / 2%.
+                    // 4. Heartbeat: Log every 10 minutes (600s) to keep the chart alive during stability.
+
+                    let current_status = data.status.clone();
+                    let mut significant_event = false;
+
+                    if let Some(last) = last_logged_data.as_ref() {
+                        if last.status != current_status {
+                            significant_event = true;
+                        } else {
+                            // Calculate Volatility Velocity
+                            // How much did it change per second?
+                            let time_delta = last_log_time.elapsed().as_secs_f64().max(1.0);
+
+                            let v_now = data.input_voltage.unwrap_or(0.0);
+                            let v_last = last.input_voltage.unwrap_or(0.0);
+                            let v_velocity = (v_now - v_last).abs() / time_delta;
+
+                            // 0.5V per second is a "spike" or "sag" even if small amplitude
+                            if v_velocity > 0.5 {
+                                significant_event = true;
+                            }
+
+                            // Load Change > 5% (Significant load switch)
+                            let l_diff =
+                                (data.ups_load.unwrap_or(0.0) - last.ups_load.unwrap_or(0.0)).abs();
+                            if l_diff > 5.0 {
+                                significant_event = true;
+                            }
+
+                            // Battery Change > 2% (Charging/Discharging)
+                            let b_diff = (data.battery_charge.unwrap_or(0.0)
+                                - last.battery_charge.unwrap_or(0.0))
+                            .abs();
+                            if b_diff > 2.0 {
+                                significant_event = true;
+                            }
+                        }
+                    } else {
+                        significant_event = true; // First run
+                    }
+
+                    let should_log =
+                        first_run || last_log_time.elapsed().as_secs() >= 600 || significant_event;
+
+                    if should_log {
                         let db_guard = db_arc.lock().await;
                         if let Some(db) = db_guard.as_ref() {
                             let entry = crate::db::HistoryEntry {
@@ -259,6 +300,14 @@ pub async fn start_background_polling(
                                 error!("Failed to log history: {}", e);
                             } else {
                                 last_log_time = std::time::Instant::now();
+                                last_logged_data = Some(data.clone());
+
+                                // Prune once a day (approx check)
+                                if first_run {
+                                    if let Err(e) = db.prune_old_data(365) {
+                                        error!("Failed to prune old data: {}", e);
+                                    }
+                                }
                                 first_run = false;
                             }
                         }
@@ -516,6 +565,9 @@ pub async fn get_chart_data(
     time_range: String,
 ) -> Result<Vec<crate::db::HistoryEntry>, String> {
     let hours = match time_range.as_str() {
+        "1y" => 24 * 365,
+        "30d" => 24 * 30,
+        "7d" => 24 * 7,
         "24h" => 24,
         "12h" => 12,
         "6h" => 6,
@@ -526,6 +578,40 @@ pub async fn get_chart_data(
     let guard = db_state.0.lock().await;
     if let Some(db) = guard.as_ref() {
         db.get_history(hours).map_err(|e| e.to_string())
+    } else {
+        Err("Database not initialized".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn get_history_stats(
+    db_state: State<'_, DbState>,
+    time_range: String,
+) -> Result<crate::db::HistoryStats, String> {
+    let hours = match time_range.as_str() {
+        "1y" => 24 * 365,
+        "30d" => 24 * 30,
+        "7d" => 24 * 7,
+        "24h" => 24,
+        "12h" => 12,
+        "6h" => 6,
+        "1h" => 1,
+        _ => 24,
+    };
+
+    let guard = db_state.0.lock().await;
+    if let Some(db) = guard.as_ref() {
+        db.get_history_stats(hours).map_err(|e| e.to_string())
+    } else {
+        Err("Database not initialized".to_string())
+    }
+}
+
+#[tauri::command]
+pub async fn clean_history_data(db_state: State<'_, DbState>) -> Result<usize, String> {
+    let guard = db_state.0.lock().await;
+    if let Some(db) = guard.as_ref() {
+        db.cleanup_history().map_err(|e| e.to_string())
     } else {
         Err("Database not initialized".to_string())
     }

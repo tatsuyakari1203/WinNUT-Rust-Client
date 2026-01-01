@@ -57,6 +57,21 @@ export interface EventLog {
   type: 'info' | 'warning' | 'error';
 }
 
+export interface HistoryStats {
+  min_input_voltage: number;
+  max_input_voltage: number;
+  avg_input_voltage: number;
+  min_output_voltage: number;
+  max_output_voltage: number;
+  avg_output_voltage: number;
+  max_load: number;
+  avg_load: number;
+  min_battery: number;
+  avg_battery: number;
+  data_points: number;
+  outages: number;
+}
+
 export interface UpsState {
   data: UpsData | null;
   history: { time: string; load: number; watts: number }[];
