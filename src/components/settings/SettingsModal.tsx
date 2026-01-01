@@ -40,18 +40,20 @@ export function SettingsModal() {
   }, [open]);
 
   const toggleAutostart = async (checked: boolean) => {
+    // Optimistic update
+    setAutostartProxy(checked);
+
     try {
       if (checked) {
         await enable();
-        toast.success("Enabled Start with Windows");
+        toast.success("Start with Windows enabled");
       } else {
         await disable();
-        toast.success("Disabled Start with Windows");
+        toast.info("Start with Windows disabled");
       }
-      setAutostartProxy(checked);
     } catch (e) {
-      console.error(e);
-      toast.error("Failed to toggle autostart: " + e);
+      console.error("Autostart toggle failed:", e);
+      toast.error(`Autostart Error: ${e instanceof Error ? e.message : String(e)}`);
       // Revert UI if failed
       setAutostartProxy(!checked);
     }
@@ -301,16 +303,15 @@ export function SettingsModal() {
                     <p className="text-[10px] text-muted-foreground">Automatically launch the application when you log in.</p>
                   </div>
                   <div className="flex items-center">
-                    {/* Native Toggle Switch Style */}
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        checked={autostartProxy}
-                        onChange={(e) => toggleAutostart(e.target.checked)}
-                      />
-                      <div className="w-9 h-5 bg-muted peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                    </label>
+                    <div className="flex items-center">
+                      {/* Reliable Div-based Toggle */}
+                      <div
+                        onClick={() => toggleAutostart(!autostartProxy)}
+                        className={`w-9 h-5 rounded-full cursor-pointer transition-colors relative ${autostartProxy ? 'bg-primary' : 'bg-muted dark:bg-zinc-700'}`}
+                      >
+                        <div className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-4 w-4 transition-transform duration-200 ${autostartProxy ? 'translate-x-full border-white' : ''}`} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -15,7 +15,9 @@
     "core:window:allow-set-focus",
     "core:window:allow-start-dragging",
     "notification:allow-notify",
+    "notification:default",
     "updater:default",
-    "process:default"
+    "process:default",
+    "autostart:default"
   ]
 }
