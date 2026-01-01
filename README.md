@@ -1,40 +1,74 @@
-# WinNUT Rust Client
+<div align="center">
+  <img src="assets/dashboard-v0.1.5.png" alt="WinNUT Client Dashboard" width="100%" />
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey) ![Status](https://img.shields.io/badge/status-stable-green)
+  <h1 align="center">WinNUT Rust Client</h1>
 
-A modern, high-performance desktop client for monitoring UPS (Uninterruptible Power Supply) devices via the NUT (Network UPS Tools) protocol. Built with **Tauri v2** and **React**, focusing on aesthetics, performance, and native Windows integration.
+  <p align="center">
+    <strong>A modern, high-performance desktop client for monitoring UPS devices via NUT.</strong>
+  </p>
 
-![Application Preview](assets/dashboard-v0.1.5.png)
+  <p align="center">
+    <a href="https://github.com/tatsuyakari1203/WinNUT-Rust-Client/blob/main/LICENSE">
+      <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
+    </a>
+    <img src="https://img.shields.io/badge/platform-Windows-lightgrey" alt="Platform" />
+    <img src="https://img.shields.io/badge/status-stable-green" alt="Status" />
+  </p>
 
-## ✨ Key Features
+  <p align="center">
+    Built with <b>Tauri v2</b> and <b>React</b>, focusing on aesthetics, performance, and native Windows integration.<br>
+    Say goodbye to clunky, outdated monitoring tools.
+  </p>
+</div>
 
-- **Real-time Monitoring**: Visualize Input/Output voltage, load, battery charge, and runtime with sub-second latency.
-- **Historical Data**: Track power trends over time (Voltage, Load, Battery) with interactive, zoomable charts.
-  ![Historical Data](assets/history-v0.1.5.png)
-- **Theming Engine**: Support for popular themes including **Catppuccin** 🐱, **Dracula** 🧛, **Nord** ❄️, **Monokai** 🎨, and **GitHub Dark** 🐙.
-  ![Theme Selection](assets/settings-themes-v0.1.5.png)
-- **Auto Update**: Seamless background updates via GitHub Releases with progress tracking and instant alerts.
-- **Modern UI**:
-    - Full Dark Mode support with a **high-contrast white Tray Icon**.
-    - **Live Version Badge** in the header for easy verification.
-    - Built with Shadcn/UI and TailwindCSS for a premium feel.
-- **Native Integration**:
-    - **System Tray**: Quick status overview (Online/On Battery/Low Battery).
-    - **Native Shutdown**: Leverages Windows' native shutdown scheduler (`shutdown.exe`) for reliable automation.
-    - **Notifications**: Toast alerts for critical power events.
-- **Network Discovery**: Automatically scans your local subnet to find active NUT servers.
-- **Remote Control**: Send commands to the UPS (Test Battery, Toggle Beeper, etc.) directly from the client.
-  ![Remote Control](assets/remote-control-v0.1.5.png)
-- **Lightweight**: Written in Rust, utilizing a fraction of the memory compared to Electron alternatives.
+<br />
 
-## 🛠️ Tech Stack
+## ✨ Features at a Glance
 
-- **Core**: [Tauri v2](https://v2.tauri.app/) (Rust)
-- **Frontend**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [TailwindCSS](https://tailwindcss.com/) + [Shadcn/UI](https://ui.shadcn.com/)
-- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
-- **Build Tool**: [Vite](https://vitejs.dev/) + [Bun](https://bun.sh/)
-- **Auto Update**: [Tauri Plugin Updater](https://v2.tauri.app/plugin/updater/) + GitHub Releases
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>📈 Advanced Analytics</h3>
+      <p>Track your power metrics with precision. Visualize Input/Output voltage, load, battery charge, and runtime with sub-second latency.</p>
+      <p>Interactive, zoomable charts let you analyze historical trends to understand your power usage patterns over time.</p>
+    </td>
+    <td width="50%">
+      <img src="assets/history-v0.1.5.png" alt="Historical Data Graph" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/settings-themes-v0.1.5.png" alt="Theme Selection" width="100%" />
+    </td>
+    <td width="50%" valign="top">
+      <h3>🎨 Beautiful Theming</h3>
+      <p>Personalize your experience with a rich collection of themes. Whether you prefer the icy cool of <b>Nord</b>, the vibrancy of <b>Dracula</b>, or the classic <b>Catppuccin</b>, we have your style covered.</p>
+      <ul>
+        <li><b>Catppuccin</b> 🐱</li>
+        <li><b>Dracula</b> 🧛</li>
+        <li><b>Nord</b> ❄️</li>
+        <li><b>Monokai</b> 🎨</li>
+        <li><b>GitHub Dark</b> 🐙</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>⚡ Powerful Control & Native Integration</h3>
+      <p>More than just a monitor.</p>
+      <ul>
+        <li><b>Remote Control</b>: Send commands (Test Battery, Toggle Beeper) directly to your UPS.</li>
+        <li><b>Native Shutdown</b>: Safely shuts down your Windows PC using native schedulers when battery is critical.</li>
+        <li><b>System Tray</b>: Quick status at a glance.</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <img src="assets/remote-control-v0.1.5.png" alt="Remote Control Panel" width="100%" />
+    </td>
+  </tr>
+</table>
+
+<br />
 
 ## 🚀 Installation
 
@@ -45,7 +79,12 @@ Go to the [Releases](https://github.com/tatsuyakari1203/WinNUT-Rust-Client/relea
 - A running **NUT (Network UPS Tools)** server (e.g., on a Raspberry Pi, Synology NAS, or Linux server).
 - **Windows 10/11** (x64).
 
-## ⚙️ Configuration
+---
+
+## ⚙️ Configuration Guide
+
+<details>
+<summary><strong>Click to expand configuration steps</strong></summary>
 
 1.  **Connection**:
     - Open Settings (Gear icon).
@@ -55,61 +94,43 @@ Go to the [Releases](https://github.com/tatsuyakari1203/WinNUT-Rust-Client/relea
     - Enable "Automation" in Settings.
     - Set thresholds (e.g., Battery < 30% or Runtime < 120s).
     - Choose Action: **Shutdown**, **Hibernate**, or **Sleep**.
-    - When triggered, a native Windows notification will appear with a 15s countdown, allowing you to save work.
+    - When triggered, a native Windows notification will appear with a 15s countdown.
 3.  **Update**:
-    - Open Settings -> Update Tab.
-    - Inspect current version and check for updates.
+    - Open Settings -> Update Tab to check for the latest features.
+
+</details>
+
+<br />
+
+## 🛠️ Tech Stack
+
+<div align="center">
+  <img src="https://img.shields.io/badge/Tauri-2.0-FEC00F?style=for-the-badge&logo=tauri&logoColor=black" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+</div>
+
+<br />
 
 ## 💻 Development
 
-### Prerequisites
-- [Rust](https://www.rust-lang.org/tools/install) (stable)
-- [Node.js](https://nodejs.org/) or [Bun](https://bun.sh/)
-- [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (for Windows development)
-
-### Setup
+If you want to build from source or contribute:
 
 ```bash
-# Clone the repository
+# Clone
 git clone https://github.com/tatsuyakari1203/WinNUT-Rust-Client.git
 cd WinNUT-Rust-Client
 
-# Install dependencies
+# Install
 bun install
 
-# Run in development mode
+# Run Dev
 bun run tauri dev
 ```
 
-### Build & Release
+## 🤝 Contributing & License
 
-To build the application manually:
-```bash
-bun run tauri build
-```
-
-To create a new release (Bump Version -> Tag -> Push -> CI Build):
-```bash
-# Usage: bun run release <version>
-bun run release 0.1.5
-```
-This script will:
-1. Update version in `package.json` and `src-tauri/tauri.conf.json`.
-2. Commit changes.
-3. Create a git tag.
-4. Push to specific tag to trigger GitHub Actions workflow.
-
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1.  Fork the project
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+Contributions are welcome! Please submit a Pull Request.
+Distributed under the **MIT License**.
