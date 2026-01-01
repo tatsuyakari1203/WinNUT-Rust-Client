@@ -63,6 +63,147 @@
     --chart-4: 280 65% 70%;
     --chart-5: 340 75% 65%
   }
+
+  .theme-catppuccin {
+    --background: 240 21% 15%;
+    /* #1e1e2e Base */
+    --foreground: 226 64% 88%;
+    /* #cdd6f4 Text */
+    --card: 240 21% 15%;
+    /* #1e1e2e Base matching background for seamless look, or #313244 Surface0 for contrast */
+    --card-foreground: 226 64% 88%;
+    --popover: 240 21% 15%;
+    --popover-foreground: 226 64% 88%;
+    --primary: 267 84% 81%;
+    /* #cba6f7 Mauve */
+    --primary-foreground: 240 21% 12%;
+    /* Darker text on primary */
+    --secondary: 240 23% 36%;
+    /* #585b70 Surface2 */
+    --secondary-foreground: 226 64% 88%;
+    --muted: 240 23% 36%;
+    --muted-foreground: 239 13% 66%;
+    /* #a6adc8 Subtext0 */
+    --accent: 266 85% 58%;
+    /* Using Mauve or maybe Pink #f5c2e7? Let's use darker mauve for accent hover */
+    --accent-foreground: 226 64% 88%;
+    --destructive: 343 81% 75%;
+    /* #f38ba8 Red */
+    --destructive-foreground: 226 64% 88%;
+    --border: 240 23% 36%;
+    /* Surface2 for borders */
+    --input: 240 21% 15%;
+    /* Base */
+    --ring: 267 84% 81%;
+    /* Mauve */
+    --chart-1: 173 58% 39%;
+    /* Teal #94e2d5 */
+    --chart-2: 240 100% 50%;
+    /* Blue #89b4fa */
+    --chart-3: 40 100% 50%;
+    /* Yellow #f9e2af */
+    --chart-4: 10 100% 50%;
+    /* Peach #fab387 */
+    --chart-5: 280 80% 80%;
+    /* Mauve */
+    --radius: 0.5rem;
+  }
+
+  .theme-dracula {
+    --background: 231 15% 18%;
+    --foreground: 60 30% 96%;
+    --card: 231 15% 18%;
+    --card-foreground: 60 30% 96%;
+    --popover: 231 15% 18%;
+    --popover-foreground: 60 30% 96%;
+    --primary: 265 89% 78%;
+    --primary-foreground: 231 15% 18%;
+    --secondary: 231 15% 18%;
+    --secondary-foreground: 60 30% 96%;
+    --muted: 231 15% 31%;
+    --muted-foreground: 231 15% 60%;
+    --accent: 326 100% 74%;
+    --accent-foreground: 231 15% 18%;
+    --destructive: 0 100% 67%;
+    --destructive-foreground: 60 30% 96%;
+    --border: 231 15% 31%;
+    --input: 231 15% 31%;
+    --ring: 265 89% 78%;
+  }
+
+  .theme-nord {
+    --background: 220 16% 22%;
+    --foreground: 218 27% 92%;
+    --card: 220 16% 22%;
+    --card-foreground: 218 27% 92%;
+    --popover: 220 16% 22%;
+    --popover-foreground: 218 27% 92%;
+    --primary: 193 43% 67%;
+    --primary-foreground: 220 16% 22%;
+    --secondary: 222 16% 28%;
+    --secondary-foreground: 218 27% 92%;
+    --muted: 220 16% 36%;
+    --muted-foreground: 218 27% 75%;
+    --accent: 193 43% 67%;
+    --accent-foreground: 220 16% 22%;
+    --destructive: 354 42% 56%;
+    --destructive-foreground: 218 27% 92%;
+    --border: 220 16% 36%;
+    --input: 220 16% 36%;
+    --ring: 193 43% 67%;
+  }
+
+  .theme-monokai {
+    --background: 0 0% 16%;
+    /* #272822 */
+    --foreground: 0 0% 97%;
+    /* #f8f8f2 */
+    --card: 0 0% 16%;
+    --card-foreground: 0 0% 97%;
+    --popover: 0 0% 16%;
+    --popover-foreground: 0 0% 97%;
+    --primary: 44 100% 70%;
+    /* #e6db74 Yellow */
+    --primary-foreground: 0 0% 16%;
+    --secondary: 0 0% 23%;
+    /* #3e3d32 */
+    --secondary-foreground: 0 0% 97%;
+    --muted: 0 0% 23%;
+    --muted-foreground: 0 0% 46%;
+    --accent: 338 95% 56%;
+    /* #f92672 Pink */
+    --accent-foreground: 0 0% 97%;
+    --destructive: 338 95% 56%;
+    --destructive-foreground: 0 0% 97%;
+    --border: 0 0% 46%;
+    --input: 0 0% 23%;
+    --ring: 44 100% 70%;
+  }
+
+  .theme-github-dark {
+    --background: 216 28% 7%;
+    /* #0d1117 */
+    --foreground: 210 17% 82%;
+    /* #c9d1d9 */
+    --card: 216 28% 7%;
+    --card-foreground: 210 17% 82%;
+    --popover: 216 28% 11%;
+    --popover-foreground: 210 17% 82%;
+    --primary: 212 92% 43%;
+    /* #1f6feb */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 213 18% 20%;
+    --secondary-foreground: 210 17% 82%;
+    --muted: 215 14% 34%;
+    --muted-foreground: 212 11% 55%;
+    --accent: 212 92% 43%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 348 95% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 213 18% 20%;
+    --input: 216 28% 7%;
+    --ring: 212 92% 43%;
+  }
 }
 
 @layer base {

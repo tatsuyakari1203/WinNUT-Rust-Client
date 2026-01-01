@@ -10,12 +10,14 @@ import { ShutdownType } from "../../types/ups";
 import { toast } from 'sonner';
 import { useUpdater } from '../../hooks/useUpdater';
 import { Download, RefreshCw, RotateCw } from 'lucide-react';
+import { MdPalette } from "react-icons/md";
+import { FaMoon, FaSun, FaDesktop, FaCat, FaSnowflake, FaGhost, FaCode, FaGithub } from "react-icons/fa";
 import { getVersion } from '@tauri-apps/api/app';
 
 export function SettingsModal() {
-  const { config, setConfig, setConnected, ratedPower, setRatedPower, fullLoadRuntime, setFullLoadRuntime, shutdownConfig, setShutdownConfig, setSupportedCommands } = useUpsStore();
+  const { config, setConfig, setConnected, ratedPower, setRatedPower, fullLoadRuntime, setFullLoadRuntime, shutdownConfig, setShutdownConfig, setSupportedCommands, theme, setTheme } = useUpsStore();
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'connection' | 'shutdown' | 'update'>('connection');
+  const [activeTab, setActiveTab] = useState<'connection' | 'shutdown' | 'update' | 'appearance'>('connection');
   const [appVersion, setAppVersion] = useState("...");
 
   // Updater
@@ -238,6 +240,13 @@ export function SettingsModal() {
               Shutdown
             </button>
             <button
+              onClick={() => setActiveTab('appearance')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-bold transition-all ${activeTab === 'appearance' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-muted'}`}
+            >
+              <MdPalette className="h-3.5 w-3.5" />
+              Appearance
+            </button>
+            <button
               onClick={() => setActiveTab('update')}
               className={`flex items-center gap-2 px-3 py-2 rounded-md text-[11px] font-bold transition-all ${activeTab === 'update' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-muted'}`}
             >
@@ -247,7 +256,73 @@ export function SettingsModal() {
           </div>
 
           <div className="flex-1 p-6 overflow-y-auto scrollbar-hide">
-            {activeTab === 'update' ? (
+            {activeTab === 'appearance' ? (
+              <div className="space-y-6">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">Theme</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setTheme('system')}
+                        className={`flex items-center gap-2 p-3 rounded-md border text-xs font-bold transition-all ${theme === 'system' ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted'}`}
+                      >
+                        <FaDesktop className="h-4 w-4" />
+                        System
+                      </button>
+                      <button
+                        onClick={() => setTheme('light')}
+                        className={`flex items-center gap-2 p-3 rounded-md border text-xs font-bold transition-all ${theme === 'light' ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted'}`}
+                      >
+                        <FaSun className="h-4 w-4" />
+                        Light
+                      </button>
+                      <button
+                        onClick={() => setTheme('dark')}
+                        className={`flex items-center gap-2 p-3 rounded-md border text-xs font-bold transition-all ${theme === 'dark' ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted'}`}
+                      >
+                        <FaMoon className="h-4 w-4" />
+                        Dark
+                      </button>
+                      <button
+                        onClick={() => setTheme('catppuccin')}
+                        className={`flex items-center gap-2 p-3 rounded-md border text-xs font-bold transition-all ${theme === 'catppuccin' ? 'border-purple-500 bg-purple-500/10 text-purple-500' : 'border-border hover:bg-muted'} group`}
+                      >
+                        <FaCat className="h-4 w-4 text-purple-500 group-hover:animate-bounce" />
+                        Catppuccin
+                      </button>
+                      <button
+                        onClick={() => setTheme('dracula')}
+                        className={`flex items-center gap-2 p-3 rounded-md border text-xs font-bold transition-all ${theme === 'dracula' ? 'border-pink-500 bg-pink-500/10 text-pink-500' : 'border-border hover:bg-muted'} group`}
+                      >
+                        <FaGhost className="h-4 w-4 text-pink-500 group-hover:animate-pulse" />
+                        Dracula
+                      </button>
+                      <button
+                        onClick={() => setTheme('nord')}
+                        className={`flex items-center gap-2 p-3 rounded-md border text-xs font-bold transition-all ${theme === 'nord' ? 'border-sky-400 bg-sky-400/10 text-sky-400' : 'border-border hover:bg-muted'} group`}
+                      >
+                        <FaSnowflake className="h-4 w-4 text-sky-400 group-hover:animate-spin" />
+                        Nord
+                      </button>
+                      <button
+                        onClick={() => setTheme('monokai')}
+                        className={`flex items-center gap-2 p-3 rounded-md border text-xs font-bold transition-all ${theme === 'monokai' ? 'border-yellow-400 bg-yellow-400/10 text-yellow-400' : 'border-border hover:bg-muted'} group`}
+                      >
+                        <FaCode className="h-4 w-4 text-yellow-500 group-hover:rotate-12 transition-transform" />
+                        Monokai
+                      </button>
+                      <button
+                        onClick={() => setTheme('github-dark')}
+                        className={`flex items-center gap-2 p-3 rounded-md border text-xs font-bold transition-all ${theme === 'github-dark' ? 'border-zinc-500 bg-zinc-800 text-white' : 'border-border hover:bg-muted'} group`}
+                      >
+                        <FaGithub className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                        GitHub Dark
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : activeTab === 'update' ? (
               <div className="space-y-6">
                 <div className="flex flex-col items-center justify-center py-6 border border-dashed border-border/50 rounded-lg bg-muted/5">
                   <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">

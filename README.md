@@ -4,13 +4,15 @@
 
 A modern, high-performance desktop client for monitoring UPS (Uninterruptible Power Supply) devices via the NUT (Network UPS Tools) protocol. Built with **Tauri v2** and **React**, focusing on aesthetics, performance, and native Windows integration.
 
-![Application Preview](src-tauri/icons/preview.png)
+![Application Preview](assets/dashboard-v0.1.5.png)
 
 ## ✨ Key Features
 
 - **Real-time Monitoring**: Visualize Input/Output voltage, load, battery charge, and runtime with sub-second latency.
 - **Historical Data**: Track power trends over time (Voltage, Load, Battery) with interactive charts.
-  ![Historical Data](src-tauri/icons/history_preview.png)
+  ![Historical Data](assets/history-v0.1.5.png)
+- **Theming Engine**: Support for popular themes including **Catppuccin** 🐱, **Dracula** 🧛, **Nord** ❄️, **Monokai** 🎨, and **GitHub Dark** 🐙.
+  ![Theme Selection](assets/settings-themes-v0.1.5.png)
 - **Auto Update**: Seamless background updates via GitHub Releases with progress tracking and instant alerts.
 - **Modern UI**:
     - Full Dark Mode support with a **high-contrast white Tray Icon**.

@@ -5,9 +5,7 @@ import { SettingsModal } from '../settings/SettingsModal';
 import { useUpsStore } from '../../store/upsStore';
 import { useEffect, useState } from 'react';
 
-const appWindow = getCurrentWindow();
-
-interface HeaderProps {
+export interface HeaderProps {
   view: 'dashboard' | 'history';
   setView: (v: 'dashboard' | 'history') => void;
 }
@@ -18,9 +16,11 @@ export function Header({ view, setView }: HeaderProps) {
 
   const handleDrag = (e: React.MouseEvent) => {
     if (e.button === 0 && !(e.target as HTMLElement).closest('button, input, .no-drag')) {
-      appWindow.startDragging();
+      getCurrentWindow().startDragging();
     }
   };
+
+  const appWindow = getCurrentWindow();
 
   const [appVersion, setAppVersion] = useState<string>('');
 

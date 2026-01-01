@@ -69,6 +69,7 @@ export interface UpsState {
   config: NutConfig | null; // Persisted connection settings
   shutdownConfig: ShutdownConfig; // Persistence for shutdown logic
   supportedCommands: string[]; // List of commands the UPS supports
+  theme: 'system' | 'light' | 'dark' | 'catppuccin' | 'dracula' | 'nord' | 'monokai' | 'github-dark';
   setUpsData: (data: UpsData) => void;
   setError: (error: string | null) => void;
   setConnected: (isConnected: boolean) => void;
@@ -77,5 +78,6 @@ export interface UpsState {
   setConfig: (config: NutConfig | null) => void;
   setShutdownConfig: (config: ShutdownConfig) => void;
   setSupportedCommands: (commands: string[]) => void;
+  setTheme: (theme: 'system' | 'light' | 'dark' | 'catppuccin' | 'dracula' | 'nord' | 'monokai' | 'github-dark') => void;
   clearEvents: () => void;
 }

@@ -21,6 +21,7 @@ export const useUpsStore = create<UpsState>()(
         delaySeconds: 15,
       },
       supportedCommands: [],
+      theme: 'system',
 
       events: [],
 
@@ -89,6 +90,7 @@ export const useUpsStore = create<UpsState>()(
       setConfig: (config) => set({ config }),
       setShutdownConfig: (shutdownConfig) => set({ shutdownConfig }),
       setSupportedCommands: (supportedCommands) => set({ supportedCommands }),
+      setTheme: (theme) => set({ theme }),
       clearEvents: () => set({ events: [] }),
     }),
     {
@@ -99,6 +101,7 @@ export const useUpsStore = create<UpsState>()(
         config: state.config,
         shutdownConfig: state.shutdownConfig,
         events: state.events,
+        theme: state.theme,
       }),
     }
   )

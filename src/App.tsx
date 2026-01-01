@@ -67,6 +67,32 @@ export default function App() {
     };
   }, [config, shutdownConfig]); // Dependencies
 
+  // Theme Management
+  const { theme } = useUpsStore();
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark", "theme-catppuccin", "theme-dracula", "theme-nord", "theme-monokai", "theme-github-dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+    } else if (theme === "catppuccin") {
+      root.classList.add("dark", "theme-catppuccin");
+    } else if (theme === "dracula") {
+      root.classList.add("dark", "theme-dracula");
+    } else if (theme === "nord") {
+      root.classList.add("dark", "theme-nord");
+    } else if (theme === "monokai") {
+      root.classList.add("dark", "theme-monokai");
+    } else if (theme === "github-dark") {
+      root.classList.add("dark", "theme-github-dark");
+    } else {
+      root.classList.add(theme);
+    }
+  }, [theme]);
+
   return (
     <div className="h-screen bg-background font-sans text-foreground select-none overflow-hidden flex flex-col border border-border rounded-[2px]">
       <Header view={view} setView={setView} />
