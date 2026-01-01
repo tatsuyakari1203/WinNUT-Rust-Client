@@ -24,6 +24,7 @@ A modern, high-performance desktop client for monitoring UPS (Uninterruptible Po
     - **Notifications**: Toast alerts for critical power events.
 - **Network Discovery**: Automatically scans your local subnet to find active NUT servers.
 - **Remote Control**: Send commands to the UPS (Test Battery, Toggle Beeper, etc.) directly from the client.
+  ![Remote Control](assets/remote-control-v0.1.5.png)
 - **Lightweight**: Written in Rust, utilizing a fraction of the memory compared to Electron alternatives.
 
 ## 🛠️ Tech Stack
